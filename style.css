@@ -1,0 +1,397 @@
+:root {
+    /* Nueva Paleta de Colores Oscuros */
+    --fondo-negro: #0b0e14;
+    --fondo-tarjeta: #1a1f29;
+    --azul-efe: #3a86ff;
+    --rojo-vibrante: #ff4d4d;
+    --texto-principal: #ffffff;
+    --texto-secundario: #a0a8b9;
+    --borde: #2d3446;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body { 
+    font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif; 
+    background: var(--fondo-negro); 
+    color: var(--texto-principal);
+    margin: 0; 
+    padding: clamp(10px, 3vw, 20px);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Contenedor Principal */
+.app-container { 
+    max-width: 600px; 
+    width: 100%;
+    margin: 0 auto; 
+    background: var(--fondo-tarjeta); 
+    padding: clamp(15px, 5vw, 30px);
+    border-radius: clamp(12px, 3vw, 20px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+}
+
+h1 { 
+    color: var(--rojo-vibrante); 
+    text-align: center; 
+    font-size: clamp(1.3rem, 5vw, 1.8rem);
+    margin-bottom: clamp(15px, 3vw, 20px);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    word-break: break-word;
+}
+
+#fecha-actual {
+    text-align: center;
+    color: var(--texto-secundario);
+    font-size: clamp(0.8rem, 2.5vw, 0.9rem);
+    margin-bottom: clamp(15px, 3vw, 20px);
+}
+
+/* Grupos de Selección */
+.selector-group { 
+    display: flex; 
+    flex-direction: column; 
+    gap: clamp(10px, 2.5vw, 15px);
+    margin-bottom: clamp(20px, 4vw, 25px);
+}
+
+label {
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
+    font-weight: bold;
+    color: var(--azul-efe);
+    margin-left: 5px;
+}
+
+select { 
+    width: 100%;
+    padding: clamp(12px, 3vw, 14px);
+    border-radius: 10px; 
+    border: 1px solid var(--borde); 
+    background: var(--fondo-negro);
+    color: var(--texto-principal);
+    font-size: clamp(0.9rem, 2.5vw, 1rem);
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a0a8b9' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 35px;
+}
+
+select:focus {
+    border-color: var(--azul-efe);
+}
+
+/* Botones */
+button#buscar-btn { 
+    width: 100%;
+    background: var(--rojo-vibrante); 
+    color: white; 
+    border: none; 
+    padding: clamp(14px, 3.5vw, 16px);
+    border-radius: 10px;
+    cursor: pointer; 
+    font-weight: bold; 
+    font-size: clamp(1rem, 2.5vw, 1.1rem);
+    transition: transform 0.2s, background 0.3s;
+    margin-top: 10px;
+    touch-action: manipulation;
+}
+
+button#buscar-btn:active {
+    transform: scale(0.98);
+}
+
+button#buscar-btn:hover {
+    background: #ff3333;
+}
+
+.swap-button {
+    width: 100%;
+    background: var(--borde);
+    color: var(--texto-principal);
+    border: none;
+    padding: clamp(10px, 2.5vw, 12px);
+    margin: 5px 0;
+    border-radius: 8px;
+    font-size: clamp(0.8rem, 2vw, 0.85rem);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.3s;
+    touch-action: manipulation;
+}
+
+.swap-button:hover {
+    background: #3d465c;
+}
+
+/* Tarjetas de Horarios */
+.tarjeta-tren { 
+    background: var(--fondo-negro); 
+    border-left: 4px solid var(--rojo-vibrante); 
+    padding: clamp(12px, 3vw, 18px);
+    margin-bottom: clamp(10px, 2.5vw, 12px);
+    border-radius: 12px;
+    display: flex; 
+    flex-direction: column;
+    gap: clamp(8px, 2vw, 10px);
+    transition: border-color 0.3s;
+}
+
+.hora-principal {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.bloque-hora {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.etiqueta {
+    font-size: clamp(0.65rem, 1.8vw, 0.75rem);
+    color: var(--texto-secundario);
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.valor {
+    font-size: clamp(1.1rem, 3.5vw, 1.4rem);
+    font-weight: bold;
+    color: var(--texto-principal);
+}
+
+.flecha {
+    color: var(--azul-efe);
+    font-weight: bold;
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+    flex-shrink: 0;
+}
+
+.info-extra {
+    border-top: 1px solid var(--borde);
+    padding-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: clamp(0.75rem, 2vw, 0.85rem);
+    color: var(--texto-secundario);
+}
+
+.info-extra > span {
+    min-width: 0;
+    word-break: break-word;
+}
+
+/* Estado Pasado */
+.tarjeta-tren.pasado { 
+    opacity: 0.3; 
+    filter: grayscale(1); 
+    border-left-color: #444; 
+}
+
+/* Feriados y Avisos */
+#aviso-feriado { 
+    background: #332b00; 
+    color: #ffd700; 
+    padding: clamp(10px, 2.5vw, 12px);
+    border-radius: 10px; 
+    margin-bottom: 15px; 
+    text-align: center; 
+    border: 1px solid #665500;
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
+}
+
+/* Switch Filtro */
+.filtro-tiempo { 
+    display: none; /* Oculto por defecto */
+    align-items: center; 
+    gap: 12px; 
+    margin: 15px 0; 
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
+    color: var(--texto-secundario); 
+    transition: opacity 0.3s ease;
+}
+
+.switch { position: relative; display: inline-block; width: 40px; height: 22px; flex-shrink: 0; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { 
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; 
+    background-color: var(--borde); 
+    transition: .4s; border-radius: 22px; 
+}
+
+input:checked + .slider { background-color: var(--azul-efe); }
+.slider:before { 
+    position: absolute; content: ""; height: 16px; width: 16px; 
+    left: 3px; bottom: 3px; 
+    background-color: white; 
+    transition: .4s; border-radius: 50%; 
+}
+input:checked + .slider:before { transform: translateX(18px); }
+
+/* Estado deshabilitado del switch */
+input:disabled + .slider {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+input:disabled:checked + .slider {
+    background-color: var(--borde);
+}
+
+.filtro-tiempo:has(input:disabled) {
+    opacity: 0.5;
+}
+
+.hidden { display: none; }
+.no-data {
+    text-align: center;
+    color: var(--texto-secundario);
+    padding: clamp(15px, 4vw, 20px);
+    font-size: clamp(0.85rem, 2vw, 0.95rem);
+}
+
+/* Media Queries para dispositivos específicos */
+
+/* Smartphones pequeños (iPhone SE, etc) */
+@media screen and (max-width: 375px) {
+    body {
+        padding: 8px;
+    }
+    
+    .app-container {
+        padding: 15px;
+        border-radius: 12px;
+    }
+    
+    h1 {
+        font-size: 1.3rem;
+        margin-bottom: 12px;
+    }
+    
+    .hora-principal {
+        gap: 6px;
+    }
+    
+    .info-extra {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+/* Smartphones medianos (iPhone 11, 12, 13) */
+@media screen and (min-width: 376px) and (max-width: 428px) {
+    .app-container {
+        max-width: 100%;
+    }
+}
+
+/* Tablets portrait */
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+    .app-container {
+        max-width: 700px;
+        padding: 35px;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+    
+    select, button {
+        font-size: 1.1rem;
+    }
+    
+    .tarjeta-tren {
+        padding: 22px;
+    }
+}
+
+/* Desktop y tablets landscape */
+@media screen and (min-width: 1025px) {
+    body {
+        padding: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .app-container {
+        max-width: 650px;
+        padding: 40px;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+    
+    button#buscar-btn:hover {
+        transform: scale(1.02);
+        background: #ff3333;
+    }
+    
+    .tarjeta-tren:hover {
+        border-left-width: 6px;
+    }
+}
+
+/* Landscape mode para móviles */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+    body {
+        padding: 5px;
+    }
+    
+    .app-container {
+        padding: 15px;
+        margin: 5px auto;
+    }
+    
+    h1 {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+    }
+    
+    .selector-group {
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+    
+    select, button {
+        padding: 10px;
+    }
+}
+
+/* iPhone 13 Pro Max específico */
+@media screen and (device-width: 428px) and (device-height: 926px) {
+    .app-container {
+        max-width: 100%;
+    }
+}
+
+/* Safe area para dispositivos con notch */
+@supports (padding: max(0px)) {
+    body {
+        padding-left: max(10px, env(safe-area-inset-left));
+        padding-right: max(10px, env(safe-area-inset-right));
+        padding-top: max(10px, env(safe-area-inset-top));
+        padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+}
+body {
+    /* Mantiene el contenido lejos del notch y la barra de gestos de iPhone */
+    padding-top: env(safe-area-inset-top, 15px);
+    padding-bottom: env(safe-area-inset-bottom, 15px);
+}

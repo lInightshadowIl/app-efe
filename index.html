@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0b0e14">
+    <title>Biotren App - Horarios</title>
+    <meta name="description" content="Consulta los horarios del Biotren offline.">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+       <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="icons/icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="icons/icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="icons/icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="icons/icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="icons/icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="57x57" href="icons/icon-57x57.png">
+    <link rel="apple-touch-icon" href="https://www.efe.cl/wp-content/themes/efe/assets/img/logo-efe.png">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>🚉 Biotren Horarios</h1>
+            <p id="fecha-actual"></p>
+        </header>
+
+        <div id="aviso-feriado" class="hidden"></div>
+
+        <section class="selector-group">
+            <label>¿Cuándo viajas?</label>
+            <select id="dia-select">
+                <option value="hoy">Hoy (Tiempo Real)</option>
+                <option value="laboral">Lunes a Viernes</option>
+                <option value="sabado">Sábado</option>
+                <option value="festivo">Domingo o Feriado</option>
+            </select>
+
+            <div class="estaciones-container">
+                <label>Origen:</label>
+                <select id="origen-select"></select>
+
+                <button id="btn-swap" type="button" class="swap-button">
+                    🔄 Intercambiar Estaciones
+                </button>
+
+                <label>Destino:</label>
+                <select id="destino-select"></select>
+            </div>
+
+            <div class="filtro-tiempo">
+                <label class="switch">
+                    <input type="checkbox" id="ver-todo">
+                    <span class="slider"></span>
+                </label>
+                <span>Mostrar horarios pasados</span>
+            </div>
+
+            <button id="buscar-btn">Consultar Horarios</button>
+        </section>
+
+        <section id="resultados-container">
+            <p class="no-data">Selecciona tu ruta para ver los próximos trenes.</p>
+        </section>
+    </div>
+    
+    <script src="estaciones.js"></script>
+    <script src="app.js"></script>
+    <!-- Registro del Service Worker para PWA -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registrado con éxito:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Error al registrar Service Worker:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
