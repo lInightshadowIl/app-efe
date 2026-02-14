@@ -1,12 +1,12 @@
 {
     "name": "Horarios Biotren",
-    "short_name": "Horarios Biotren",
-    "description": "Consulta horarios del Biotren ",
-    "start_url": "/index.html",
+    "short_name": "Biotren",
+    "description": "Consulta horarios del Biotren",
+    "start_url": ".",
     "display": "standalone",
     "background_color": "#0b0e14",
     "theme_color": "#ff4d4d",
-    "orientation": "portrait-primary",
+    "orientation": "portrait",
     "scope": "/",
     "icons": [
         {
