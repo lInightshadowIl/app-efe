@@ -177,7 +177,9 @@ async function inicializarApp() {
         origenSelect.addEventListener('change', limpiarResultados);
         destinoSelect.addEventListener('change', limpiarResultados);
         diaSelect.addEventListener('change', limpiarResultados);
-        checkVerTodo.addEventListener('change', limpiarResultados);
+        
+        // El switch de horarios pasados debe ejecutar búsqueda automáticamente
+        checkVerTodo.addEventListener('change', realizarBusqueda);
 
         cargarEstaciones();
         verificarFeriado();
