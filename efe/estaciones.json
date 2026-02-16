@@ -1,0 +1,61 @@
+{
+  "ultima_actualizacion": "2026-02-16",
+  "lineas": {
+    "Línea 1": [
+      { "id": "11", "nombre": "Hualqui" },
+      { "id": "12", "nombre": "La Leonera" },
+      { "id": "13", "nombre": "Manquimavida" },
+      { "id": "14", "nombre": "Pedro Medina" },
+      { "id": "15", "nombre": "Chiguayante" },
+      { "id": "16", "nombre": "Concepción" },
+      { "id": "17", "nombre": "Lzo. Arenas" },
+      { "id": "18", "nombre": "UTFSM" },
+      { "id": "19", "nombre": "Los Condores" },
+      { "id": "20", "nombre": "Higueras" },
+      { "id": "21", "nombre": "El Arenal" },
+      { "id": "22", "nombre": "Mercado Thno." }
+    ],
+    "Línea 2": [
+      { "id": "23", "nombre": "Juan Pablo II" },
+      { "id": "24", "nombre": "Diagonal Biobio" },
+      { "id": "25", "nombre": "Alborada" },
+      { "id": "26", "nombre": "Costa Mar" },
+      { "id": "27", "nombre": "El Parque" },
+      { "id": "28", "nombre": "Lomas Coloradas" },
+      { "id": "29", "nombre": "Cardenal Raúl Silva H." },
+      { "id": "30", "nombre": "Hito Galvarino" },
+      { "id": "31", "nombre": "Los Canelos" },
+      { "id": "32", "nombre": "Huinca" },
+      { "id": "33", "nombre": "Cristo Redentor" },
+      { "id": "34", "nombre": "Laguna Quiñenco" },
+      { "id": "35", "nombre": "Intermodal Coronel" }
+    ]
+  },
+  "estaciones": [
+    { "id": "11", "nombre": "Hualqui", "linea": 1 },
+    { "id": "12", "nombre": "La Leonera", "linea": 1 },
+    { "id": "13", "nombre": "Manquimavida", "linea": 1 },
+    { "id": "14", "nombre": "Pedro Medina", "linea": 1 },
+    { "id": "15", "nombre": "Chiguayante", "linea": 1 },
+    { "id": "16", "nombre": "Concepción", "linea": 1 },
+    { "id": "17", "nombre": "Lzo. Arenas", "linea": 1 },
+    { "id": "18", "nombre": "UTFSM", "linea": 1 },
+    { "id": "19", "nombre": "Los Condores", "linea": 1 },
+    { "id": "20", "nombre": "Higueras", "linea": 1 },
+    { "id": "21", "nombre": "El Arenal", "linea": 1 },
+    { "id": "22", "nombre": "Mercado Thno.", "linea": 1 },
+    { "id": "23", "nombre": "Juan Pablo II", "linea": 2 },
+    { "id": "24", "nombre": "Diagonal Biobio", "linea": 2 },
+    { "id": "25", "nombre": "Alborada", "linea": 2 },
+    { "id": "26", "nombre": "Costa Mar", "linea": 2 },
+    { "id": "27", "nombre": "El Parque", "linea": 2 },
+    { "id": "28", "nombre": "Lomas Coloradas", "linea": 2 },
+    { "id": "29", "nombre": "Cardenal Raúl Silva H.", "linea": 2 },
+    { "id": "30", "nombre": "Hito Galvarino", "linea": 2 },
+    { "id": "31", "nombre": "Los Canelos", "linea": 2 },
+    { "id": "32", "nombre": "Huinca", "linea": 2 },
+    { "id": "33", "nombre": "Cristo Redentor", "linea": 2 },
+    { "id": "34", "nombre": "Laguna Quiñenco", "linea": 2 },
+    { "id": "35", "nombre": "Intermodal Coronel", "linea": 2 }
+  ]
+}
