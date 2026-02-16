@@ -394,4 +394,64 @@ body {
     /* Mantiene el contenido lejos del notch y la barra de gestos de iPhone */
     padding-top: env(safe-area-inset-top, 15px);
     padding-bottom: env(safe-area-inset-bottom, 15px);
+
+}
+/* Mensaje de feriado */
+.mensaje-feriado {
+    text-align: center;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 16px;
+    color: white;
+    margin: 20px 0;
+}
+
+.icono-feriado {
+    font-size: 64px;
+    margin-bottom: 20px;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.mensaje-feriado h3 {
+    font-size: 24px;
+    margin: 15px 0;
+    font-weight: 700;
+}
+
+.mensaje-feriado p {
+    font-size: 16px;
+    margin: 10px 0;
+    opacity: 0.95;
+}
+
+.sugerencia {
+    margin-top: 25px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+}
+
+/* Mejorar aviso de feriado en header */
+#aviso-feriado {
+    background: linear-gradient(90deg, #f44336, #e91e63);
+    color: white;
+    padding: 15px;
+    text-align: center;
+    font-weight: 600;
+    border-radius: 8px;
+    margin: 15px 0;
+    box-shadow: 0 4px 12px rgba(244, 67, 54, 0.3);
+    animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
 }
