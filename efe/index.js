@@ -136,10 +136,31 @@ async function iniciarScraper() {
         // 4. Inicializar base de datos
         let baseDeDatos = {
             ultima_update: obtenerFechaChile(),
-            fechas_scrapeadas: fechas,
-            feriados: feriadosChile,
+            fechas_scrapeadas: {
+                viernes: fechas.viernes,
+                sabado: fechas.sabado,
+                domingo: fechas.domingo
+            },
+            feriados: feriadosChile, // Array simple de fechas
+            feriados_info: [], // ⭐ NUEVO: Información completa de feriados
+            advertencias: advertencias,
             rutas: {}
         };
+
+        if (fs.existsSync(RUTA_FERIADOS)) {
+            try {
+                const feriadosData = JSON.parse(fs.readFileSync(RUTA_FERIADOS, 'utf-8'));
+                baseDeDatos.feriados_info = feriadosData.feriados.map(f => ({
+                    fecha: f.fecha,
+                    nombre: f.nombre,
+                    dia: f.dia,
+                    irrenunciable: f.irrenunciable || false
+                }));
+                console.log(`📋 Agregada información de ${baseDeDatos.feriados_info.length} feriados`);
+            } catch (e) {
+                console.warn('⚠️ No se pudo cargar info detallada de feriados');
+            }
+        }
 
         // Pre-poblar estructura
         estaciones.forEach(o => {
