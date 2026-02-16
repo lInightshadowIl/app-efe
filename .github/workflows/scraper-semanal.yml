@@ -2,10 +2,7 @@ name: Scraper Semanal Biotrén
 
 on:
   schedule:
-    # Ejecutar todos los lunes a las 06:00 AM hora Chile (09:00 UTC)
     - cron: '0 9 * * 1'
-  
-  # Permitir ejecución manual desde la interfaz de GitHub
   workflow_dispatch:
 
 jobs:
@@ -21,7 +18,7 @@ jobs:
       - name: 🟢 Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'  # ⭐ CAMBIAR DE 18 A 20
       
       - name: 🕐 Mostrar hora actual en Chile
         run: |
