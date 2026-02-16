@@ -1,0 +1,81 @@
+name: Scraper Semanal Biotrén
+
+on:
+  schedule:
+    # Ejecutar todos los lunes a las 06:00 AM hora Chile (09:00 UTC)
+    - cron: '0 9 * * 1'
+  
+  # Permitir ejecución manual desde la interfaz de GitHub
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: 🟢 Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: 🕐 Mostrar hora actual en Chile
+        run: |
+          echo "Hora UTC: $(date -u)"
+          echo "Hora Chile (estimada): $(TZ='America/Santiago' date)"
+      
+      - name: 📦 Instalar dependencias
+        working-directory: ./efe
+        run: npm install
+      
+      - name: 🚂 Ejecutar scraper
+        working-directory: ./efe
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TZ: America/Santiago
+        run: node index.js
+        continue-on-error: true
+      
+      - name: 📋 Verificar archivo generado
+        run: |
+          if [ -f horarios.json ]; then
+            echo "✅ horarios.json generado correctamente"
+            echo "📊 Tamaño: $(du -h horarios.json | cut -f1)"
+            echo "📝 Primeras líneas:"
+            head -20 horarios.json
+          else
+            echo "❌ ERROR: horarios.json no fue generado"
+            exit 1
+          fi
+      
+      - name: 💾 Commit y push de resultados
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "GitHub Actions Bot"
+          git add horarios.json
+          if git diff --staged --quiet; then
+            echo "Sin cambios en horarios.json"
+          else
+            git commit -m "🤖 Actualización automática horarios - $(TZ='America/Santiago' date +'%Y-%m-%d %H:%M:%S')"
+            git push
+          fi
+      
+      - name: 📢 Notificar fallo de workflow
+        if: failure()
+        run: |
+          FECHA_CHILE=$(TZ='America/Santiago' date +'%Y-%m-%d %H:%M:%S')
+          curl -H "Content-Type: application/json" \
+            -d "{
+              \"username\": \"Biotrén Bot\",
+              \"embeds\": [{
+                \"title\": \"❌ Fallo total del workflow\",
+                \"description\": \"El workflow de GitHub Actions falló.\n\n⏰ Hora: $FECHA_CHILE\n🔗 Ver logs: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}\",
+                \"color\": 15158332,
+                \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"
+              }]
+            }" \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
