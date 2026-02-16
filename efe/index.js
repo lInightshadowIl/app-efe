@@ -14,7 +14,21 @@ const RUTA_ESTACIONES = path.join(__dirname, 'estaciones.json');
 const RUTA_FERIADOS = path.join(__dirname, 'feriados.json');
 const RUTA_SALIDA = path.join(__dirname, '..', 'horarios.json');
 
-function obtenerFechasSemanaActual() {
+function obtenerFechaChile() {
+    return new Date().toLocaleString('es-CL', { 
+        timeZone: 'America/Santiago',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    });
+}
+
+// ⭐ MEJORADO: Función que valida feriados
+function obtenerFechasSemanaActual(feriadosArray) {
     const hoy = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
     const diaSemana = hoy.getDay();
     
@@ -37,24 +51,26 @@ function obtenerFechasSemanaActual() {
         return `${year}-${month}-${day}`;
     };
     
+    const viernesFecha = formatearFecha(viernes);
+    const sabadoFecha = formatearFecha(sabado);
+    const domingoFecha = formatearFecha(domingo);
+    
+    // VALIDAR SI SON FERIADOS
+    const viernesEsFeriado = feriadosArray.includes(viernesFecha);
+    const sabadoEsFeriado = feriadosArray.includes(sabadoFecha);
+    
+    console.log(`\n🔍 VALIDACIÓN DE FERIADOS:`);
+    console.log(`   Viernes ${viernesFecha}: ${viernesEsFeriado ? '❌ ES FERIADO (Biotrén NO opera)' : '✅ Día laboral normal'}`);
+    console.log(`   Sábado ${sabadoFecha}: ${sabadoEsFeriado ? '❌ ES FERIADO (Biotrén NO opera)' : '✅ Sábado normal'}`);
+    console.log(`   Domingo ${domingoFecha}: ✅ Siempre horario festivo\n`);
+    
     return {
-        viernes: formatearFecha(viernes),
-        sabado: formatearFecha(sabado),
-        domingo: formatearFecha(domingo)
+        viernes: viernesFecha,
+        sabado: sabadoFecha,
+        domingo: domingoFecha,
+        viernesEsFeriado,
+        sabadoEsFeriado
     };
-}
-
-function obtenerFechaChile() {
-    return new Date().toLocaleString('es-CL', { 
-        timeZone: 'America/Santiago',
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-    });
 }
 
 async function notificarDiscord(mensaje, esError = false) {
@@ -90,7 +106,7 @@ async function iniciarScraper() {
     console.log(`📁 Directorio de trabajo: ${__dirname}`);
 
     try {
-        // 1. Cargar estaciones desde JSON
+        // 1. Cargar estaciones
         if (!fs.existsSync(RUTA_ESTACIONES)) {
             const errorMsg = `❌ Error: No se encuentra ${RUTA_ESTACIONES}`;
             console.error(errorMsg);
@@ -99,41 +115,91 @@ async function iniciarScraper() {
         }
 
         const estacionesData = JSON.parse(fs.readFileSync(RUTA_ESTACIONES, 'utf-8'));
-        
-        // Combinar ambas líneas en un solo array
         const estaciones = [
             ...estacionesData.lineas["Línea 1"],
             ...estacionesData.lineas["Línea 2"]
         ];
-        
-        console.log(`📍 Cargadas ${estaciones.length} estaciones desde JSON`);
+        console.log(`📍 Cargadas ${estaciones.length} estaciones`);
 
-        // 2. Cargar feriados
+        // 2. Cargar feriados (EXCLUYENDO feriados bancarios)
         let feriadosChile = [];
+        let feriadosInfo = [];
+        
         if (fs.existsSync(RUTA_FERIADOS)) {
             try {
                 const feriadosData = JSON.parse(fs.readFileSync(RUTA_FERIADOS, 'utf-8'));
-                feriadosChile = feriadosData.feriados.map(f => f.fecha);
-                console.log(`📅 Cargados ${feriadosChile.length} feriados de Chile`);
+                
+                // ⭐ FILTRAR: Excluir feriados bancarios (Biotrén SÍ opera el 31 de diciembre)
+                const feriadosReales = feriadosData.feriados.filter(f => f.tipo !== "bancario");
+                
+                feriadosChile = feriadosReales.map(f => f.fecha);
+                feriadosInfo = feriadosReales.map(f => ({
+                    fecha: f.fecha,
+                    nombre: f.nombre,
+                    dia: f.dia,
+                    irrenunciable: f.irrenunciable || false,
+                    tipo: f.tipo
+                }));
+                
+                console.log(`📅 Cargados ${feriadosChile.length} feriados reales (excluyendo bancarios)`);
+                
+                // Verificar si se excluyó el 31 de diciembre
+                const excluidos = feriadosData.feriados.filter(f => f.tipo === "bancario");
+                if (excluidos.length > 0) {
+                    console.log(`ℹ️  Feriados bancarios excluidos (Biotrén SÍ opera):`);
+                    excluidos.forEach(f => console.log(`   - ${f.fecha}: ${f.nombre}`));
+                }
+                
             } catch (e) {
-                console.warn('⚠️ No se pudieron cargar feriados, continuando sin ellos');
+                console.warn('⚠️ No se pudieron cargar feriados');
             }
         }
 
-        // 3. Obtener fechas dinámicas
-        const fechas = obtenerFechasSemanaActual();
-        const fases = [
-            { id: 'laboral', fecha: fechas.viernes },
-            { id: 'sabado', fecha: fechas.sabado },
-            { id: 'festivo', fecha: fechas.domingo }
-        ];
+        // 3. Obtener fechas y VALIDAR si son feriados
+        const fechas = obtenerFechasSemanaActual(feriadosChile);
+        
+        // 4. Construir fases según disponibilidad
+        const fases = [];
+        const advertencias = []; // ⭐ FIX: Definir ANTES de usar
+        
+        // VIERNES - Solo si NO es feriado
+        if (!fechas.viernesEsFeriado) {
+            fases.push({ id: 'laboral', fecha: fechas.viernes });
+        } else {
+            const feriadoInfo = feriadosInfo.find(f => f.fecha === fechas.viernes);
+            const nombreFeriado = feriadoInfo ? feriadoInfo.nombre : 'Feriado';
+            advertencias.push(`⚠️ VIERNES ${fechas.viernes} es ${nombreFeriado} - Biotrén NO opera, se omite scraping`);
+        }
+        
+        // SÁBADO - Solo si NO es feriado
+        if (!fechas.sabadoEsFeriado) {
+            fases.push({ id: 'sabado', fecha: fechas.sabado });
+        } else {
+            const feriadoInfo = feriadosInfo.find(f => f.fecha === fechas.sabado);
+            const nombreFeriado = feriadoInfo ? feriadoInfo.nombre : 'Feriado';
+            advertencias.push(`⚠️ SÁBADO ${fechas.sabado} es ${nombreFeriado} - Biotrén NO opera, se omite scraping`);
+        }
+        
+        // DOMINGO - Siempre scrapear
+        fases.push({ id: 'festivo', fecha: fechas.domingo });
 
-        console.log(`📅 Fechas de esta semana (próximo fin de semana):`);
-        console.log(`   Viernes (laboral): ${fechas.viernes}`);
-        console.log(`   Sábado: ${fechas.sabado}`);
-        console.log(`   Domingo (festivo): ${fechas.domingo}`);
+        if (advertencias.length > 0) {
+            console.log('\n⚠️ ADVERTENCIAS:');
+            advertencias.forEach(adv => console.log(adv));
+            console.log('');
+        }
 
-        // 4. Inicializar base de datos
+        if (fases.length === 0) {
+            const mensajeError = '❌ CRÍTICO: Todos los días son feriados. No hay nada que scrapear.';
+            console.error(mensajeError);
+            await notificarDiscord(mensajeError, true);
+            return;
+        }
+
+        console.log(`📅 Fechas a scrapear (${fases.length} días):`);
+        fases.forEach(f => console.log(`   ${f.id}: ${f.fecha}`));
+
+        // 5. Inicializar base de datos
         let baseDeDatos = {
             ultima_update: obtenerFechaChile(),
             fechas_scrapeadas: {
@@ -141,26 +207,11 @@ async function iniciarScraper() {
                 sabado: fechas.sabado,
                 domingo: fechas.domingo
             },
-            feriados: feriadosChile, // Array simple de fechas
-            feriados_info: [], // ⭐ NUEVO: Información completa de feriados
+            feriados: feriadosChile,
+            feriados_info: feriadosInfo,
             advertencias: advertencias,
             rutas: {}
         };
-
-        if (fs.existsSync(RUTA_FERIADOS)) {
-            try {
-                const feriadosData = JSON.parse(fs.readFileSync(RUTA_FERIADOS, 'utf-8'));
-                baseDeDatos.feriados_info = feriadosData.feriados.map(f => ({
-                    fecha: f.fecha,
-                    nombre: f.nombre,
-                    dia: f.dia,
-                    irrenunciable: f.irrenunciable || false
-                }));
-                console.log(`📋 Agregada información de ${baseDeDatos.feriados_info.length} feriados`);
-            } catch (e) {
-                console.warn('⚠️ No se pudo cargar info detallada de feriados');
-            }
-        }
 
         // Pre-poblar estructura
         estaciones.forEach(o => {
@@ -183,7 +234,7 @@ async function iniciarScraper() {
         let erroresEncontrados = 0;
         let rutasCompletadas = 0;
 
-        // 5. EJECUCIÓN POR DÍAS
+        // 6. EJECUCIÓN POR DÍAS (solo días válidos)
         for (const fase of fases) {
             console.log(`\n--- TRABAJANDO DÍA: ${fase.id.toUpperCase()} (${fase.fecha}) ---`);
             progressBar.start(totalRutasPorDia, 0);
@@ -237,9 +288,7 @@ async function iniciarScraper() {
                         erroresEncontrados++;
                     }
 
-                    // Guardado incremental
                     fs.writeFileSync(RUTA_SALIDA, JSON.stringify(baseDeDatos, null, 2));
-
                     await sleep(Math.random() * (DELAY_MAX - DELAY_MIN) + DELAY_MIN);
                     progressBar.increment();
                 }
@@ -252,26 +301,30 @@ async function iniciarScraper() {
         console.log(`📁 Archivo generado en: ${RUTA_SALIDA}`);
         
         // Notificar éxito
-        const mensajeExito = `
+        let mensajeExito = `
 **Scraping completado exitosamente** 🎉
 
-📅 **Fechas procesadas (próximo fin de semana):**
-- Viernes (laboral): ${fechas.viernes}
-- Sábado: ${fechas.sabado}
-- Domingo (festivo): ${fechas.domingo}
+📅 **Fechas procesadas:**
+- Viernes ${fechas.viernes}: ${fechas.viernesEsFeriado ? '❌ FERIADO (omitido)' : '✅ Scrapeado'}
+- Sábado ${fechas.sabado}: ${fechas.sabadoEsFeriado ? '❌ FERIADO (omitido)' : '✅ Scrapeado'}
+- Domingo ${fechas.domingo}: ✅ Scrapeado
 
 📊 **Estadísticas:**
+- Días procesados: ${fases.length}/3
 - Rutas completadas: ${rutasCompletadas}
-- Errores encontrados: ${erroresEncontrados}
-- Estaciones procesadas: ${estaciones.length}
-- Feriados cargados: ${feriadosChile.length}
+- Errores: ${erroresEncontrados}
+- Estaciones: ${estaciones.length}
+- Feriados: ${feriadosChile.length}
 
 🕒 **Última actualización:** ${baseDeDatos.ultima_update}
 📍 **Zona horaria:** Santiago, Chile
-📁 **Archivo:** horarios.json (raíz del proyecto)
         `;
+
+        if (advertencias.length > 0) {
+            mensajeExito += `\n\n⚠️ **Advertencias:**\n${advertencias.join('\n')}`;
+        }
         
-        await notificarDiscord(mensajeExito, erroresEncontrados > 100);
+        await notificarDiscord(mensajeExito, erroresEncontrados > 100 || advertencias.length > 0);
 
     } catch (error) {
         const errorMsg = `
