@@ -1,38 +1,33 @@
 let baseDatos = null;
 
-
 async function cargarDatos() {
     const contenedor = document.getElementById('resultados-container');
     
     try {
-        // 1. Intentar obtener la versión del servidor (forzando bypass de caché con el timestamp)
-        // Pedimos el archivo pero con un sello de tiempo para saltar el bloqueo del celu
         const respuestaSrv = await fetch(`horarios.json?v=${Date.now()}`);
         const dataNueva = await respuestaSrv.json();
 
-        // 2. Revisar qué versión tenemos guardada en el celular
         const ultimaLocal = localStorage.getItem('ultima_update');
         const ultimaServidor = dataNueva.ultima_update;
 
         if (ultimaServidor !== ultimaLocal) {
-            // ¡Hay datos nuevos! Guardamos en la memoria del celu
             baseDatos = dataNueva;
             localStorage.setItem('baseDatos', JSON.stringify(dataNueva));
             localStorage.setItem('ultima_update', ultimaServidor);
-            console.log("App actualizada a la versión: " + ultimaServidor);
+            console.log("✅ App actualizada a la versión: " + ultimaServidor);
+            mostrarNotificacion("📲 Horarios actualizados correctamente");
         } else {
-            // Los datos son iguales, usamos lo que ya teníamos guardado
             const localStored = localStorage.getItem('baseDatos');
             baseDatos = JSON.parse(localStored);
-            console.log("Usando datos locales (ya están al día)");
+            console.log("💾 Usando datos locales (ya están al día)");
         }
 
     } catch (error) {
-        console.warn("Sin conexión o error. Intentando usar datos locales de emergencia...");
-        // 3. Fallback: Si no hay internet, intentar cargar lo que haya en el celu
+        console.warn("⚠️ Sin conexión. Intentando usar datos locales...");
         const localStored = localStorage.getItem('baseDatos');
         if (localStored) {
             baseDatos = JSON.parse(localStored);
+            mostrarNotificacion("📱 Modo offline: usando datos guardados", 'warning');
         } else {
             contenedor.innerHTML = "<p class='no-data'>Primera vez: Necesitas internet para descargar horarios.</p>";
             throw error;
@@ -40,12 +35,42 @@ async function cargarDatos() {
     }
 }
 
+function mostrarNotificacion(mensaje, tipo = 'success') {
+    let notif = document.getElementById('notificacion-app');
+    if (!notif) {
+        notif = document.createElement('div');
+        notif.id = 'notificacion-app';
+        notif.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: ${tipo === 'success' ? '#4CAF50' : tipo === 'error' ? '#f44336' : '#FF9800'};
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            font-size: 14px;
+            max-width: 300px;
+        `;
+        document.body.appendChild(notif);
+    }
+    
+    notif.textContent = mensaje;
+    notif.style.display = 'block';
+    
+    setTimeout(() => {
+        notif.style.display = 'none';
+    }, 3000);
+}
+
 async function inicializarApp() {
     try {
-        // 1. Cargar base de datos
-        const respuesta = await fetch('horarios.json');
-        if (!respuesta.ok) throw new Error("No se pudo cargar horarios.json");
-        baseDatos = await respuesta.json();
+        await cargarDatos();
+        
+        if (!baseDatos) {
+            throw new Error("No se pudo cargar la base de datos");
+        }
 
         const origenSelect = document.getElementById('origen-select');
         const destinoSelect = document.getElementById('destino-select');
@@ -54,11 +79,9 @@ async function inicializarApp() {
         const btnSwap = document.getElementById('btn-swap');
         const checkVerTodo = document.getElementById('ver-todo');
 
-        // 2. Unificar estaciones
         function cargarEstaciones() {
             const todas = [...estacionesEFE["Línea 1"], ...estacionesEFE["Línea 2"]];
             const unicas = todas.filter((v, i, a) => a.findIndex(t => (t.id === v.id)) === i);
-            //unicas.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
             const html = unicas.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
             origenSelect.innerHTML = html;
@@ -68,7 +91,6 @@ async function inicializarApp() {
             destinoSelect.value = "35"; // Coronel
         }
 
-        // Función auxiliar para extraer viajes de forma segura
         function obtenerViajesSeguros(origen, destino, tipoDia) {
             const key = `${origen}-${destino}`;
             const datos = baseDatos.rutas[key];
@@ -76,7 +98,13 @@ async function inicializarApp() {
             return Array.isArray(datos) ? datos : (datos[tipoDia] || []);
         }
 
-        // 3. Lógica principal de búsqueda
+        // ⭐ NUEVA FUNCIÓN: Verificar si HOY es feriado
+        function verificarSiHoyEsFeriado() {
+            const hoy = new Date().toISOString().split('T')[0];
+            const listaFeriados = baseDatos.feriados || [];
+            return listaFeriados.includes(hoy);
+        }
+
         function realizarBusqueda() {
             const origen = origenSelect.value;
             const destino = destinoSelect.value;
@@ -92,19 +120,50 @@ async function inicializarApp() {
             const hoyIso = ahora.toISOString().split('T')[0];
             const listaFeriados = baseDatos.feriados || [];
             const esFeriado = listaFeriados.includes(hoyIso);
-            const diaSemana = ahora.getDay(); 
+            const diaSemana = ahora.getDay();
+
+            // ⭐ CASO ESPECIAL: Si eligió "HOY" y es feriado
+            if (diaElegido === "hoy" && esFeriado) {
+                const contenedor = document.getElementById('resultados-container');
+                
+                // Buscar el nombre del feriado en feriados.json si existe
+                let nombreFeriado = "Feriado";
+                if (baseDatos.feriados_info) {
+                    const feriadoInfo = baseDatos.feriados_info.find(f => f.fecha === hoyIso);
+                    if (feriadoInfo) nombreFeriado = feriadoInfo.nombre;
+                }
+                
+                contenedor.innerHTML = `
+                    <div class="mensaje-feriado">
+                        <div class="icono-feriado">🚫</div>
+                        <h3>Biotrén no opera hoy</h3>
+                        <p><strong>Hoy es ${nombreFeriado}</strong></p>
+                        <p>El servicio de Biotrén <strong>no funciona en feriados</strong>.</p>
+                        <div class="sugerencia">
+                            💡 <strong>Sugerencia:</strong> Puedes consultar horarios para otros días usando el selector de arriba.
+                        </div>
+                    </div>
+                `;
+                
+                // Ocultar filtro de horarios pasados
+                const contenedorFiltro = document.querySelector('.filtro-tiempo');
+                contenedorFiltro.style.display = 'none';
+                return;
+            }
 
             let tipoHorario;
             if (diaElegido === "hoy") {
-                if (esFeriado || diaSemana === 0) tipoHorario = "festivo";
-                else if (diaSemana === 6) tipoHorario = "sabado";
-                else tipoHorario = "laboral";
+                // No es feriado, determinar tipo de día normal
+                if (diaSemana === 0) tipoHorario = "festivo"; // Domingo
+                else if (diaSemana === 6) tipoHorario = "sabado"; // Sábado
+                else tipoHorario = "laboral"; // Lunes a Viernes
             } else {
                 tipoHorario = diaElegido;
             }
 
             let viajes = obtenerViajesSeguros(origen, destino, tipoHorario);
 
+            // Combinaciones si no hay ruta directa
             if (viajes.length === 0 && origen !== "16" && destino !== "16") {
                 const tramo1 = obtenerViajesSeguros(origen, "16", tipoHorario);
                 const tramo2 = obtenerViajesSeguros("16", destino, tipoHorario);
@@ -125,10 +184,8 @@ async function inicializarApp() {
             const horaActualStr = ahora.getHours().toString().padStart(2, '0') + ":" + 
                                   ahora.getMinutes().toString().padStart(2, '0');
 
-            // Verificar si hay horarios pasados
             const hayPasados = diaElegido === "hoy" && viajes.some(t => t.s < horaActualStr);
             
-            // Controlar el estado del switch
             const contenedorFiltro = document.querySelector('.filtro-tiempo');
             if (diaElegido === "hoy" && hayPasados) {
                 contenedorFiltro.style.display = 'flex';
@@ -148,37 +205,27 @@ async function inicializarApp() {
             renderizarHorarios(viajesFiltrados, horaActualStr, diaElegido === "hoy");
         }
 
-        // --- SECCIÓN DE EVENTOS MODIFICADA ---
-        
-        // Función para limpiar los resultados
         function limpiarResultados() {
             const contenedor = document.getElementById('resultados-container');
             contenedor.innerHTML = "<p class='no-data'>Selecciona tu ruta para ver los próximos trenes.</p>";
             
-            // Ocultar el filtro de horarios pasados al limpiar
             const contenedorFiltro = document.querySelector('.filtro-tiempo');
             contenedorFiltro.style.display = 'none';
             checkVerTodo.disabled = true;
             checkVerTodo.checked = false;
         }
         
-        // El botón Buscar es ahora el único que dispara la búsqueda
         btnBuscar.addEventListener('click', realizarBusqueda);
-
-        // El botón Swap solo intercambia los valores, ya no busca automáticamente
         btnSwap.addEventListener('click', () => {
             const temp = origenSelect.value;
             origenSelect.value = destinoSelect.value;
             destinoSelect.value = temp;
-            limpiarResultados(); // Limpiar resultados al intercambiar
+            limpiarResultados();
         });
 
-        // Limpiar resultados cuando cambien las selecciones
         origenSelect.addEventListener('change', limpiarResultados);
         destinoSelect.addEventListener('change', limpiarResultados);
         diaSelect.addEventListener('change', limpiarResultados);
-        
-        // El switch de horarios pasados debe ejecutar búsqueda automáticamente
         checkVerTodo.addEventListener('change', realizarBusqueda);
 
         cargarEstaciones();
@@ -186,7 +233,7 @@ async function inicializarApp() {
         mostrarFecha();
 
     } catch (error) {
-        console.error("Error crítico:", error);
+        console.error("❌ Error crítico:", error);
         document.getElementById('resultados-container').innerHTML = 
             "<p class='no-data'>Error al cargar la aplicación. Revisa la consola.</p>";
     }
@@ -224,7 +271,14 @@ function verificarFeriado() {
     const aviso = document.getElementById('aviso-feriado');
     if (baseDatos && baseDatos.feriados && baseDatos.feriados.includes(hoy)) {
         if(aviso) {
-            aviso.innerHTML = "📅 Hoy es Feriado: Operando con horario de Domingo.";
+            // Buscar nombre del feriado
+            let nombreFeriado = "Feriado";
+            if (baseDatos.feriados_info) {
+                const feriadoInfo = baseDatos.feriados_info.find(f => f.fecha === hoy);
+                if (feriadoInfo) nombreFeriado = feriadoInfo.nombre;
+            }
+            
+            aviso.innerHTML = `🚫 <strong>HOY ES ${nombreFeriado.toUpperCase()}</strong> - Biotrén NO opera en feriados`;
             aviso.style.display = "block";
             aviso.classList.remove('hidden');
         }
@@ -233,7 +287,10 @@ function verificarFeriado() {
 
 function mostrarFecha() {
     const opciones = { weekday: 'long', day: 'numeric', month: 'long' };
-    document.getElementById('fecha-actual').innerText = new Date().toLocaleDateString('es-CL', opciones);
+    const fechaEl = document.getElementById('fecha-actual');
+    if (fechaEl) {
+        fechaEl.innerText = new Date().toLocaleDateString('es-CL', opciones);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', inicializarApp);
