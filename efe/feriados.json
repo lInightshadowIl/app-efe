@@ -1,0 +1,169 @@
+{
+  "pais": "Chile",
+  "año": 2026,
+  "region": "Santiago",
+  "totalFeriados": 17,
+  "feriadosIrrenunciables": 5,
+  "feriados": [
+    {
+      "fecha": "2026-01-01",
+      "dia": "Jueves",
+      "nombre": "Año Nuevo",
+      "tipo": "civil",
+      "irrenunciable": true,
+      "finDeSemanaLargo": false
+    },
+    {
+      "fecha": "2026-04-03",
+      "dia": "Viernes",
+      "nombre": "Viernes Santo",
+      "tipo": "religioso",
+      "irrenunciable": false,
+      "finDeSemanaLargo": true
+    },
+    {
+      "fecha": "2026-04-04",
+      "dia": "Sábado",
+      "nombre": "Sábado Santo",
+      "tipo": "religioso",
+      "irrenunciable": false,
+      "finDeSemanaLargo": true
+    },
+    {
+      "fecha": "2026-05-01",
+      "dia": "Viernes",
+      "nombre": "Día del Trabajador",
+      "tipo": "civil",
+      "irrenunciable": true,
+      "finDeSemanaLargo": true
+    },
+    {
+      "fecha": "2026-05-21",
+      "dia": "Jueves",
+      "nombre": "Día de las Glorias Navales",
+      "tipo": "civil",
+      "irrenunciable": false,
+      "finDeSemanaLargo": false
+    },
+    {
+      "fecha": "2026-06-21",
+      "dia": "Domingo",
+      "nombre": "Día Nacional de los Pueblos Indígenas",
+      "tipo": "civil",
+      "irrenunciable": false,
+      "finDeSemanaLargo": false,
+      "nota": "Solsticio de Invierno"
+    },
+    {
+      "fecha": "2026-06-29",
+      "dia": "Lunes",
+      "nombre": "San Pedro y San Pablo",
+      "tipo": "religioso",
+      "irrenunciable": false,
+      "finDeSemanaLargo": true
+    },
+    {
+      "fecha": "2026-07-16",
+      "dia": "Jueves",
+      "nombre": "Día de la Virgen del Carmen",
+      "tipo": "religioso",
+      "irrenunciable": false,
+      "finDeSemanaLargo": false
+    },
+    {
+      "fecha": "2026-08-15",
+      "dia": "Sábado",
+      "nombre": "Asunción de la Virgen",
+      "tipo": "religioso",
+      "irrenunciable": false,
+      "finDeSemanaLargo": false
+    },
+    {
+      "fecha": "2026-09-18",
+      "dia": "Viernes",
+      "nombre": "Día de la Independencia de Chile",
+      "tipo": "civil",
+      "irrenunciable": true,
+      "finDeSemanaLargo": true
+    },
+    {
+      "fecha": "2026-09-19",
+      "dia": "Sábado",
+      "nombre": "Día de las Glorias del Ejército",
+      "tipo": "civil",
+      "irrenunciable": true,
+      "finDeSemanaLargo": true
+    },
+    {
+      "fecha": "2026-10-12",
+      "dia": "Lunes",
+      "nombre": "Día del Encuentro de Dos Mundos",
+      "tipo": "civil",
+      "irrenunciable": false,
+      "finDeSemanaLargo": true
+    },
+    {
+      "fecha": "2026-10-31",
+      "dia": "Sábado",
+      "nombre": "Día de las Iglesias Evangélicas y Protestantes",
+      "tipo": "religioso",
+      "irrenunciable": false,
+      "finDeSemanaLargo": false
+    },
+    {
+      "fecha": "2026-11-01",
+      "dia": "Domingo",
+      "nombre": "Día de Todos los Santos",
+      "tipo": "religioso",
+      "irrenunciable": false,
+      "finDeSemanaLargo": false
+    },
+    {
+      "fecha": "2026-12-08",
+      "dia": "Martes",
+      "nombre": "Inmaculada Concepción",
+      "tipo": "religioso",
+      "irrenunciable": false,
+      "finDeSemanaLargo": false
+    },
+    {
+      "fecha": "2026-12-25",
+      "dia": "Viernes",
+      "nombre": "Navidad",
+      "tipo": "civil",
+      "irrenunciable": true,
+      "finDeSemanaLargo": true
+    },
+    {
+      "fecha": "2026-12-31",
+      "dia": "Jueves",
+      "nombre": "Fin de Año",
+      "tipo": "bancario",
+      "irrenunciable": false,
+      "finDeSemanaLargo": false,
+      "nota": "Feriado bancario - solo bancos e instituciones financieras"
+    }
+  ],
+  "feriadosRegionales": [
+    {
+      "fecha": "2026-06-07",
+      "dia": "Domingo",
+      "nombre": "Asalto y Toma del Morro de Arica",
+      "region": "Arica y Parinacota",
+      "tipo": "conmemorativo"
+    },
+    {
+      "fecha": "2026-08-20",
+      "dia": "Jueves",
+      "nombre": "Natalicio de Bernardo O'Higgins",
+      "comunas": [
+        "Chillán",
+        "Chillán Viejo"
+      ],
+      "region": "Ñuble",
+      "tipo": "conmemorativo"
+    }
+  ],
+  "finesDeSemanaLargos": 6,
+  "generadoEn": "2026-02-14T00:50:22.851Z"
+}
