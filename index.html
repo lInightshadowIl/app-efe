@@ -72,7 +72,7 @@
     
     <script src="estaciones.js"></script>
     <script src="app.js"></script>
-    <!-- Registro del Service Worker para PWA -->
+
     <!-- Registro del Service Worker mejorado -->
 <script>
     if ('serviceWorker' in navigator) {
@@ -94,13 +94,10 @@
                         newWorker.addEventListener('statechange', () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                                 // Hay una nueva versión disponible
-                                console.log('✨ Nueva versión lista');
+                                console.log('✨ Nueva versión lista. Actualizando automáticamente...');
                                 
-                                // Opcional: Preguntar al usuario si quiere actualizar
-                                if (confirm('📲 Nueva versión disponible. ¿Actualizar ahora?')) {
-                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
-                                    window.location.reload();
-                                }
+                                // CAMBIO: Se ejecuta directamente sin preguntar al usuario
+                                newWorker.postMessage({ type: 'SKIP_WAITING' });
                             }
                         });
                     });
@@ -110,7 +107,7 @@
                 });
         });
         
-        // Detectar cuando el Service Worker toma control
+        // Detectar cuando el Service Worker toma control para recargar la página
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             console.log('🔄 Service Worker actualizado, recargando...');
             window.location.reload();
@@ -122,4 +119,5 @@
 </body>
 
 </html>
+
 
