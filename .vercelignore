@@ -1,0 +1,15 @@
+# Ignorar carpeta del scraper
+efe/
+
+# Ignorar archivos de desarrollo
+node_modules/
+.env
+.env.local
+*.log
+
+# Ignorar archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Ignorar archivos de GitHub Actions
+.github/
