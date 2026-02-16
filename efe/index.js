@@ -10,9 +10,9 @@ const DELAY_MAX = 3500;
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
 // Rutas de archivos
-const RUTA_ESTACIONES = path.join(__dirname, 'estaciones.html');
+const RUTA_ESTACIONES = path.join(__dirname, 'estaciones.json');
 const RUTA_FERIADOS = path.join(__dirname, 'feriados.json');
-const RUTA_SALIDA = path.join(__dirname, '..', 'horarios.json'); // Guardar en raíz del proyecto
+const RUTA_SALIDA = path.join(__dirname, '..', 'horarios.json');
 
 function obtenerFechasSemanaActual() {
     const hoy = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
@@ -90,24 +90,23 @@ async function iniciarScraper() {
     console.log(`📁 Directorio de trabajo: ${__dirname}`);
 
     try {
-        // 1. Cargar estaciones
+        // 1. Cargar estaciones desde JSON
         if (!fs.existsSync(RUTA_ESTACIONES)) {
             const errorMsg = `❌ Error: No se encuentra ${RUTA_ESTACIONES}`;
             console.error(errorMsg);
             await notificarDiscord(errorMsg, true);
             return;
         }
-        const htmlSelect = fs.readFileSync(RUTA_ESTACIONES, 'utf-8');
-        const $selector = cheerio.load(htmlSelect);
-        const estaciones = [];
-        $selector('option').each((_, el) => {
-            const val = $selector(el).attr('value');
-            if (val && val !== "0") {
-                estaciones.push({ id: val, nombre: $selector(el).text().trim() });
-            }
-        });
 
-        console.log(`📍 Cargadas ${estaciones.length} estaciones`);
+        const estacionesData = JSON.parse(fs.readFileSync(RUTA_ESTACIONES, 'utf-8'));
+        
+        // Combinar ambas líneas en un solo array
+        const estaciones = [
+            ...estacionesData.lineas["Línea 1"],
+            ...estacionesData.lineas["Línea 2"]
+        ];
+        
+        console.log(`📍 Cargadas ${estaciones.length} estaciones desde JSON`);
 
         // 2. Cargar feriados
         let feriadosChile = [];
@@ -217,7 +216,7 @@ async function iniciarScraper() {
                         erroresEncontrados++;
                     }
 
-                    // Guardado incremental en la raíz del proyecto
+                    // Guardado incremental
                     fs.writeFileSync(RUTA_SALIDA, JSON.stringify(baseDeDatos, null, 2));
 
                     await sleep(Math.random() * (DELAY_MAX - DELAY_MIN) + DELAY_MIN);
