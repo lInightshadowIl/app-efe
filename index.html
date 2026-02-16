@@ -73,19 +73,53 @@
     <script src="estaciones.js"></script>
     <script src="app.js"></script>
     <!-- Registro del Service Worker para PWA -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/service-worker.js')
-                    .then(registration => {
-                        console.log('Service Worker registrado con éxito:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.log('Error al registrar Service Worker:', error);
+    <!-- Registro del Service Worker mejorado -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('✅ Service Worker registrado:', registration.scope);
+                    
+                    // Verificar actualizaciones cada hora
+                    setInterval(() => {
+                        registration.update();
+                    }, 60 * 60 * 1000);
+                    
+                    // Detectar nuevas versiones
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        console.log('🔄 Nueva versión detectada...');
+                        
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // Hay una nueva versión disponible
+                                console.log('✨ Nueva versión lista');
+                                
+                                // Opcional: Preguntar al usuario si quiere actualizar
+                                if (confirm('📲 Nueva versión disponible. ¿Actualizar ahora?')) {
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                    window.location.reload();
+                                }
+                            }
+                        });
                     });
-            });
-        }
-    </script>
+                })
+                .catch(error => {
+                    console.error('❌ Error al registrar Service Worker:', error);
+                });
+        });
+        
+        // Detectar cuando el Service Worker toma control
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            console.log('🔄 Service Worker actualizado, recargando...');
+            window.location.reload();
+        });
+    } else {
+        console.warn('⚠️ Service Workers no soportados en este navegador');
+    }
+</script>
 </body>
 
 </html>
+
