@@ -14,11 +14,10 @@ async function cargarDatos() {
             baseDatos = dataNueva;
             localStorage.setItem('baseDatos', JSON.stringify(dataNueva));
             localStorage.setItem('ultima_update', ultimaServidor);
-            console.log("✅ App actualizada a la versión:", ultimaServidor);
         } else {
             const localStored = localStorage.getItem('baseDatos');
             baseDatos = JSON.parse(localStored);
-            console.log("💾 Usando datos locales (ya están al día)");
+
         }
 
     } catch (error) {
@@ -26,7 +25,6 @@ async function cargarDatos() {
         const localStored = localStorage.getItem('baseDatos');
         if (localStored) {
             baseDatos = JSON.parse(localStored);
-            console.log("📱 Modo offline: usando datos guardados");
         } else {
             contenedor.innerHTML = "<p class='no-data'>Primera vez: Necesitas internet para descargar horarios.</p>";
             throw error;
@@ -123,7 +121,6 @@ async function inicializarApp() {
                 tipoHorario = diaElegido;
             }
 
-            console.log(`🔍 Buscando horarios: ${origen} → ${destino} (${tipoHorario})`);
 
             let viajes = obtenerViajesSeguros(origen, destino, tipoHorario);
 
@@ -170,7 +167,6 @@ async function inicializarApp() {
                 viajesFiltrados = viajes.filter(t => t.s >= horaActualStr);
             }
 
-            console.log(`📊 Mostrando ${viajesFiltrados.length} horarios`);
             renderizarHorarios(viajesFiltrados, horaActualStr, diaElegido === "hoy");
         }
 
@@ -189,7 +185,6 @@ async function inicializarApp() {
             const temp = origenSelect.value;
             origenSelect.value = destinoSelect.value;
             destinoSelect.value = temp;
-            console.log("🔄 Estaciones intercambiadas");
             limpiarResultados();
         });
 
@@ -203,7 +198,6 @@ async function inicializarApp() {
         mostrarFecha();
         mostrarUltimaActualizacion();
         
-        console.log("✅ App inicializada correctamente");
 
     } catch (error) {
         console.error("❌ Error crítico al inicializar app:", error);
@@ -338,13 +332,8 @@ window.addEventListener('online', () => {
     }
 });
 
-window.addEventListener('offline', () => {
-    console.log('📡 Conexión perdida - Modo offline activado');
-});
 
-// ⭐ Verificar estado inicial de conexión
-window.addEventListener('load', () => {
-    console.log(`🌐 Estado de conexión: ${navigator.onLine ? 'Online' : 'Offline'}`);
-});
+
 
 document.addEventListener('DOMContentLoaded', inicializarApp);
+
