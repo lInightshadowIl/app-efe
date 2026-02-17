@@ -791,12 +791,13 @@ body {
     max-width: 600px;
     animation: slideUp 0.25s ease;
     border-top: 3px solid var(--azul-efe);
-    max-height: 85vh;
+    max-height: 90vh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    /* Prevenir problemas con el teclado virtual */
     position: relative;
     margin-top: auto;
+    /* Padding extra al final para que los botones sean visibles cuando hay teclado */
+    padding-bottom: max(36px, env(safe-area-inset-bottom));
 }
 
 @keyframes slideUp {
@@ -807,22 +808,29 @@ body {
 /* Ajuste para cuando el teclado está visible en móviles */
 @media screen and (max-height: 600px) {
     .modal-box {
-        max-height: 90vh;
-        padding: 20px 18px 28px;
+        max-height: 100vh;
+        padding: 18px 16px;
+        padding-bottom: 24px;
+        border-radius: 16px 16px 0 0;
     }
     
     .modal-titulo {
         font-size: 1rem;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
     }
     
     .modal-campo {
-        margin-bottom: 12px;
+        margin-bottom: 10px;
     }
     
     .modal-campo input,
     .modal-campo select {
-        padding: 11px 12px;
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .modal-botones {
+        margin-top: 16px;
     }
 }
 
