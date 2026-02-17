@@ -884,6 +884,14 @@ body {
     display: flex;
     gap: 10px;
     margin-top: 22px;
+    /* Hacer que los botones se mantengan visibles cuando hay teclado */
+    position: sticky;
+    bottom: 0;
+    background: var(--fondo-tarjeta);
+    padding-top: 12px;
+    padding-bottom: 8px;
+    margin-bottom: -8px;
+    z-index: 10;
 }
 
 .btn-modal-guardar {
