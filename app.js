@@ -40,13 +40,12 @@ async function inicializarApp() {
             throw new Error("No se pudo cargar la base de datos");
         }
 
-        const modal = document.getElementById('modal-favorito');
-        const btnNueva = document.getElementById('btn-nueva-ruta');
-        const btnCancelar = document.getElementById('btn-modal-cancelar');
-        const btnGuardar = document.getElementById('btn-modal-guardar');
-        const inputNombre = document.getElementById('fav-nombre');
-        const selectFavOrigen = document.getElementById('fav-origen');    // ✅ Agregado
-        const selectFavDestino = document.getElementById('fav-destino');
+        const origenSelect = document.getElementById('origen-select');
+        const destinoSelect = document.getElementById('destino-select');
+        const diaSelect = document.getElementById('dia-select');
+        const btnBuscar = document.getElementById('buscar-btn');
+        const btnSwap = document.getElementById('btn-swap');
+        const checkVerTodo = document.getElementById('ver-todo');
 
         function cargarEstaciones() {
             const todas = [...estacionesEFE["Línea 1"], ...estacionesEFE["Línea 2"]];
@@ -664,19 +663,20 @@ function inicializarFavoritos() {
     });
 
     // Auto-scroll cuando se enfoca un input para que los botones queden visibles
+    const selectFavOrigen = document.getElementById('fav-origen');
+    const selectFavDestino = document.getElementById('fav-destino');
     const modalInputs = [inputNombre, selectFavOrigen, selectFavDestino];
+    
     modalInputs.forEach(input => {
         input.addEventListener('focus', () => {
             setTimeout(() => {
                 const modalBox = document.querySelector('.modal-box');
                 if (modalBox) {
-                    // Hace scroll hasta el final del modal para que los botones sean visibles
                     modalBox.scrollTop = modalBox.scrollHeight;
                 }
-            }, 300); // Delay para esperar que aparezca el teclado
+            }, 300);
         });
     });
 }
 
 document.addEventListener('DOMContentLoaded', inicializarApp);
-
