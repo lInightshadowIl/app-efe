@@ -662,19 +662,21 @@ function inicializarFavoritos() {
         if (e.key === 'Enter') btnGuardar.click();
     });
 
-    // Auto-scroll cuando se enfoca un input para que los botones queden visibles
+    // Solución para iOS: cuando aparece el teclado, hacer scroll en el input enfocado
     const selectFavOrigen = document.getElementById('fav-origen');
     const selectFavDestino = document.getElementById('fav-destino');
     const modalInputs = [inputNombre, selectFavOrigen, selectFavDestino];
     
     modalInputs.forEach(input => {
-        input.addEventListener('focus', () => {
+        input.addEventListener('focus', (e) => {
             setTimeout(() => {
-                const modalBox = document.querySelector('.modal-box');
-                if (modalBox) {
-                    modalBox.scrollTop = modalBox.scrollHeight;
-                }
-            }, 300);
+                // Hacer scroll del elemento enfocado para que sea visible
+                e.target.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center',
+                    inline: 'nearest'
+                });
+            }, 400);
         });
     });
 }
