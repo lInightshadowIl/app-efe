@@ -7,6 +7,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0b0e14">
+    <!-- Prevenir resize automático cuando aparece el teclado -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover, interactive-widget=resizes-content">
     <title>Biotren App - Horarios</title>
     <meta name="description" content="Consulta los horarios del Biotren offline.">
     <link rel="manifest" href="manifest.json">
@@ -129,13 +131,11 @@
                 .then(registration => {
                     // 1. Mantenemos tu verificación cada hora
                     setInterval(() => {
-                        console.log('🔍 Buscando actualizaciones...');
                         registration.update();
                     }, 60 * 60 * 1000);
                     
                     registration.addEventListener('updatefound', () => {
                         const newWorker = registration.installing;
-                        console.log('🔄 Nueva versión detectada...');
                         
                         newWorker.addEventListener('statechange', () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
@@ -169,4 +169,3 @@
 </body>
 
 </html>
-
