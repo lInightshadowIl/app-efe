@@ -661,7 +661,20 @@ function inicializarFavoritos() {
     inputNombre.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') btnGuardar.click();
     });
+
+    // Auto-scroll cuando se enfoca un input para que los botones queden visibles
+    const modalInputs = [inputNombre, selectFavOrigen, selectFavDestino];
+    modalInputs.forEach(input => {
+        input.addEventListener('focus', () => {
+            setTimeout(() => {
+                const modalBox = document.querySelector('.modal-box');
+                if (modalBox) {
+                    // Hace scroll hasta el final del modal para que los botones sean visibles
+                    modalBox.scrollTop = modalBox.scrollHeight;
+                }
+            }, 300); // Delay para esperar que aparezca el teclado
+        });
+    });
 }
 
 document.addEventListener('DOMContentLoaded', inicializarApp);
-
