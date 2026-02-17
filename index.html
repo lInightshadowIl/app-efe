@@ -34,6 +34,28 @@
         <div id="aviso-feriado" class="hidden"></div>
         <div id="aviso-feriados-semana" class="hidden"></div>
 
+        <!-- RUTAS FAVORITAS -->
+        <section class="favoritos-section" id="favoritos-section">
+            <div class="favoritos-header">
+                <div class="favoritos-titulo">
+                    ⭐ Mis Rutas <span class="fav-badge" id="fav-badge" style="display:none">0</span>
+                </div>
+                <button class="btn-nueva-ruta" id="btn-nueva-ruta">
+                    + Nueva ruta
+                </button>
+            </div>
+            <div class="favoritos-lista" id="favoritos-lista">
+                <div class="favoritos-vacio" id="favoritos-vacio">
+                    <span>⭐</span>
+                    Agrega rutas favoritas para consultar horarios con un solo toque.
+                </div>
+            </div>
+        </section>
+
+        <div class="seccion-divisor">
+            <span>Búsqueda manual</span>
+        </div>
+
         <section class="selector-group">
             <label>¿Cuándo viajas?</label>
             <select id="dia-select">
@@ -71,6 +93,31 @@
         </section>
     </div>
     
+    <!-- Modal Crear / Editar Ruta Favorita -->
+    <div class="modal-overlay" id="modal-favorito" data-modo="crear">
+        <div class="modal-box">
+            <div class="modal-titulo">⭐ <span id="modal-titulo-txt">Nueva Ruta Favorita</span></div>
+
+            <div class="modal-campo">
+                <label>Nombre de la ruta</label>
+                <input type="text" id="fav-nombre" placeholder="Ej: Trabajo, Casa, Universidad…" maxlength="30">
+            </div>
+            <div class="modal-campo">
+                <label>Origen</label>
+                <select id="fav-origen"></select>
+            </div>
+            <div class="modal-campo">
+                <label>Destino</label>
+                <select id="fav-destino"></select>
+            </div>
+
+            <div class="modal-botones">
+                <button class="btn-modal-cancelar" id="btn-modal-cancelar">Cancelar</button>
+                <button class="btn-modal-guardar"  id="btn-modal-guardar">⭐ Guardar ruta</button>
+            </div>
+        </div>
+    </div>
+
     <script src="estaciones.js"></script>
     <script src="app.js"></script>
 
@@ -118,4 +165,3 @@
 </body>
 
 </html>
-
