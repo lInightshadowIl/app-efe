@@ -642,6 +642,9 @@ body {
     border-top: 1px solid var(--borde);
     padding: 12px 14px;
     animation: slideDown 0.2s ease;
+    max-height: 350px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .favorito-resultados.visible {
@@ -732,6 +735,14 @@ body {
     padding: 10px 0;
 }
 
+.fav-mas-disponibles {
+    text-align: center;
+    color: var(--azul-efe);
+    font-size: 0.78rem;
+    padding: 8px 0 4px;
+    font-weight: 600;
+}
+
 .fav-feriado-aviso {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
@@ -758,6 +769,8 @@ body {
     justify-content: center;
     backdrop-filter: blur(4px);
     padding: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .modal-overlay.visible {
@@ -778,11 +791,39 @@ body {
     max-width: 600px;
     animation: slideUp 0.25s ease;
     border-top: 3px solid var(--azul-efe);
+    max-height: 85vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Prevenir problemas con el teclado virtual */
+    position: relative;
+    margin-top: auto;
 }
 
 @keyframes slideUp {
     from { transform: translateY(40px); opacity: 0; }
     to   { transform: translateY(0); opacity: 1; }
+}
+
+/* Ajuste para cuando el teclado está visible en móviles */
+@media screen and (max-height: 600px) {
+    .modal-box {
+        max-height: 90vh;
+        padding: 20px 18px 28px;
+    }
+    
+    .modal-titulo {
+        font-size: 1rem;
+        margin-bottom: 16px;
+    }
+    
+    .modal-campo {
+        margin-bottom: 12px;
+    }
+    
+    .modal-campo input,
+    .modal-campo select {
+        padding: 11px 12px;
+    }
 }
 
 .modal-titulo {
