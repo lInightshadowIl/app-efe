@@ -40,12 +40,13 @@ async function inicializarApp() {
             throw new Error("No se pudo cargar la base de datos");
         }
 
-        const origenSelect = document.getElementById('origen-select');
-        const destinoSelect = document.getElementById('destino-select');
-        const diaSelect = document.getElementById('dia-select');
-        const btnBuscar = document.getElementById('buscar-btn');
-        const btnSwap = document.getElementById('btn-swap');
-        const checkVerTodo = document.getElementById('ver-todo');
+        const modal = document.getElementById('modal-favorito');
+        const btnNueva = document.getElementById('btn-nueva-ruta');
+        const btnCancelar = document.getElementById('btn-modal-cancelar');
+        const btnGuardar = document.getElementById('btn-modal-guardar');
+        const inputNombre = document.getElementById('fav-nombre');
+        const selectFavOrigen = document.getElementById('fav-origen');    // ✅ Agregado
+        const selectFavDestino = document.getElementById('fav-destino');
 
         function cargarEstaciones() {
             const todas = [...estacionesEFE["Línea 1"], ...estacionesEFE["Línea 2"]];
@@ -678,3 +679,4 @@ function inicializarFavoritos() {
 }
 
 document.addEventListener('DOMContentLoaded', inicializarApp);
+
