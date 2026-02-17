@@ -1,5 +1,5 @@
 {
-  "ultima_update": "16-02-2026, 21:37:31",
+  "ultima_update": "17-02-2026, 03:17:44",
   "fechas_scrapeadas": {
     "viernes": "2026-02-20",
     "sabado": "2026-02-21",
@@ -137,6 +137,7 @@
       "tipo": "civil"
     }
   ],
+  "feriados_semana": [],
   "advertencias": [],
   "rutas": {
     "11-12": {
