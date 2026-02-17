@@ -215,6 +215,21 @@ button#buscar-btn:hover {
     font-size: clamp(0.8rem, 2vw, 0.9rem);
 }
 
+#aviso-feriados-semana {
+    margin-bottom: 15px;
+    font-size: clamp(0.8rem, 2vw, 0.9rem);
+}
+
+#aviso-feriados-semana ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+#aviso-feriados-semana li {
+    padding: 4px 0;
+    color: var(--texto-principal);
+}
+
 /* Switch Filtro */
 .filtro-tiempo { 
     display: none; /* Oculto por defecto */
