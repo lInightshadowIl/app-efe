@@ -566,8 +566,8 @@ async function consultarFavorito(idx, btnEl) {
         return;
     }
 
-    // Mostrar máximo 4 próximos trenes
-    const aRenderizar = proximos.slice(0, 4);
+    // ⭐ CAMBIO: Mostrar TODOS los próximos trenes en lugar de solo 4
+    const aRenderizar = proximos;
 
     resContainer.innerHTML = `
         <div class="fav-trenes">
@@ -584,7 +584,7 @@ async function consultarFavorito(idx, btnEl) {
                     </div>
                 </div>
             `).join('')}
-            ${proximos.length > 4 ? `<div class="fav-no-trenes" style="padding-top:0">+${proximos.length - 4} más disponibles</div>` : ''}
+            ${proximos.length > 5 ? `<div class="fav-mas-disponibles">📜 Desliza para ver todos los ${proximos.length} trenes disponibles</div>` : ''}
         </div>
     `;
 }
