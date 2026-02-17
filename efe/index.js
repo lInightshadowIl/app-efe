@@ -27,8 +27,8 @@ function obtenerFechaChile() {
     });
 }
 
-// ⭐ MEJORADO: Función que valida feriados
-function obtenerFechasSemanaActual(feriadosArray) {
+// ⭐ MEJORADO: Función que valida feriados TODA LA SEMANA
+function obtenerFechasSemanaActual(feriadosArray, feriadosInfo) {
     const hoy = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
     const diaSemana = hoy.getDay();
     
@@ -55,21 +55,53 @@ function obtenerFechasSemanaActual(feriadosArray) {
     const sabadoFecha = formatearFecha(sabado);
     const domingoFecha = formatearFecha(domingo);
     
-    // VALIDAR SI SON FERIADOS
+    // ⭐ NUEVO: Validar TODA la semana (lunes a domingo)
+    const lunes = new Date(viernes);
+    lunes.setDate(viernes.getDate() - 4); // 4 días antes del viernes
+    
+    const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const feriadosEnSemana = [];
+    
+    // Revisar cada día de lunes a domingo
+    for (let i = 0; i < 7; i++) {
+        const diaActual = new Date(lunes);
+        diaActual.setDate(lunes.getDate() + i);
+        const fechaStr = formatearFecha(diaActual);
+        const nombreDia = diasSemana[diaActual.getDay()];
+        
+        if (feriadosArray.includes(fechaStr)) {
+            const feriadoInfo = feriadosInfo.find(f => f.fecha === fechaStr);
+            const nombreFeriado = feriadoInfo ? feriadoInfo.nombre : 'Feriado';
+            
+            feriadosEnSemana.push({
+                fecha: fechaStr,
+                dia: nombreDia,
+                nombre: nombreFeriado,
+                tipo: feriadoInfo ? feriadoInfo.tipo : 'desconocido'
+            });
+        }
+    }
+    
+    // VALIDAR SI SON FERIADOS (días a scrapear)
     const viernesEsFeriado = feriadosArray.includes(viernesFecha);
     const sabadoEsFeriado = feriadosArray.includes(sabadoFecha);
     
-    console.log(`\n🔍 VALIDACIÓN DE FERIADOS:`);
-    console.log(`   Viernes ${viernesFecha}: ${viernesEsFeriado ? '❌ ES FERIADO (Biotrén NO opera)' : '✅ Día laboral normal'}`);
-    console.log(`   Sábado ${sabadoFecha}: ${sabadoEsFeriado ? '❌ ES FERIADO (Biotrén NO opera)' : '✅ Sábado normal'}`);
-    console.log(`   Domingo ${domingoFecha}: ✅ Siempre horario festivo\n`);
+    // Solo mostrar si hay feriados
+    if (feriadosEnSemana.length > 0) {
+        console.log(`\n⚠️  Feriados detectados en la semana:`);
+        feriadosEnSemana.forEach(f => {
+            console.log(`   - ${f.dia} ${f.fecha}: ${f.nombre}`);
+        });
+        console.log('');
+    }
     
     return {
         viernes: viernesFecha,
         sabado: sabadoFecha,
         domingo: domingoFecha,
         viernesEsFeriado,
-        sabadoEsFeriado
+        sabadoEsFeriado,
+        feriadosEnSemana // ⭐ NUEVO: Lista completa de feriados
     };
 }
 
@@ -156,7 +188,7 @@ async function iniciarScraper() {
         }
 
         // 3. Obtener fechas y VALIDAR si son feriados
-        const fechas = obtenerFechasSemanaActual(feriadosChile);
+        const fechas = obtenerFechasSemanaActual(feriadosChile, feriadosInfo);
         
         // 4. Construir fases según disponibilidad
         const fases = [];
@@ -209,6 +241,7 @@ async function iniciarScraper() {
             },
             feriados: feriadosChile,
             feriados_info: feriadosInfo,
+            feriados_semana: fechas.feriadosEnSemana, // ⭐ NUEVO: Feriados detectados en la semana
             advertencias: advertencias,
             rutas: {}
         };
@@ -314,11 +347,19 @@ async function iniciarScraper() {
 - Rutas completadas: ${rutasCompletadas}
 - Errores: ${erroresEncontrados}
 - Estaciones: ${estaciones.length}
-- Feriados: ${feriadosChile.length}
+- Feriados totales: ${feriadosChile.length}
 
 🕒 **Última actualización:** ${baseDeDatos.ultima_update}
 📍 **Zona horaria:** Santiago, Chile
         `;
+
+        // ⭐ NUEVO: Mostrar feriados detectados en la semana
+        if (fechas.feriadosEnSemana && fechas.feriadosEnSemana.length > 0) {
+            mensajeExito += `\n\n🎊 **Feriados esta semana (${fechas.feriadosEnSemana.length}):**\n`;
+            fechas.feriadosEnSemana.forEach(f => {
+                mensajeExito += `- ${f.dia} ${f.fecha}: ${f.nombre}\n`;
+            });
+        }
 
         if (advertencias.length > 0) {
             mensajeExito += `\n\n⚠️ **Advertencias:**\n${advertencias.join('\n')}`;
