@@ -242,7 +242,9 @@ function renderizarHorarios(trenes, horaActual, esHoy) {
 function verificarFeriado() {
     const hoy = new Date().toISOString().split('T')[0];
     const aviso = document.getElementById('aviso-feriado');
+    const avisoSemana = document.getElementById('aviso-feriados-semana');
     
+    // Verificar si HOY es feriado
     if (baseDatos && baseDatos.feriados && baseDatos.feriados.includes(hoy)) {
         let nombreFeriado = "Feriado";
         
@@ -259,6 +261,25 @@ function verificarFeriado() {
             aviso.classList.remove('hidden');
         }
     }
+    
+    // ⭐ NUEVO: Verificar si MAÑANA es feriado (advertencia preventiva)
+    if (baseDatos && baseDatos.feriados_semana && baseDatos.feriados_semana.length > 0) {
+        const manana = new Date();
+        manana.setDate(manana.getDate() + 1);
+        const mananaStr = manana.toISOString().split('T')[0];
+        
+        const feriadoManana = baseDatos.feriados_semana.find(f => f.fecha === mananaStr);
+        
+        if (feriadoManana && avisoSemana) {
+            avisoSemana.innerHTML = `
+                <div style="background: rgba(255, 193, 7, 0.15); border-left: 4px solid #ffc107; padding: 12px; border-radius: 8px;">
+                    <strong>⚠️ Mañana es feriado:</strong> ${feriadoManana.nombre} - Biotrén NO operará
+                </div>
+            `;
+            avisoSemana.classList.remove('hidden');
+            avisoSemana.style.display = "block";
+        }
+    }
 }
 
 function mostrarFecha() {
@@ -271,14 +292,10 @@ function mostrarFecha() {
 
 function mostrarUltimaActualizacion() {
     if (baseDatos && baseDatos.ultima_update) {
-        console.log(`📅 Última actualización de horarios: ${baseDatos.ultima_update}`);
-        
-        if (baseDatos.fechas_scrapeadas) {
-            console.log("📆 Fechas scrapeadas:", baseDatos.fechas_scrapeadas);
-        }
+        console.log(`📅 Última actualización: ${baseDatos.ultima_update}`);
         
         if (baseDatos.advertencias && baseDatos.advertencias.length > 0) {
-            console.warn("⚠️ Advertencias del scraper:");
+            console.warn("⚠️ Advertencias:");
             baseDatos.advertencias.forEach(adv => console.warn("  -", adv));
         }
     }
