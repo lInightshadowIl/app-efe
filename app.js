@@ -197,6 +197,7 @@ async function inicializarApp() {
         verificarFeriado();
         mostrarFecha();
         mostrarUltimaActualizacion();
+        inicializarFavoritos();
         
 
     } catch (error) {
@@ -335,5 +336,332 @@ window.addEventListener('online', () => {
 
 
 
-document.addEventListener('DOMContentLoaded', inicializarApp);
+// ===========================
+// SISTEMA DE RUTAS FAVORITAS
+// ===========================
 
+const FAVORITOS_KEY = 'biotren_favoritos';
+
+// --- Persistencia localStorage (online + offline) ---
+function cargarFavoritos() {
+    try {
+        return JSON.parse(localStorage.getItem(FAVORITOS_KEY)) || [];
+    } catch {
+        return [];
+    }
+}
+
+function guardarFavoritos(favs) {
+    localStorage.setItem(FAVORITOS_KEY, JSON.stringify(favs));
+}
+
+function obtenerNombreEstacion(id) {
+    const todas = [...estacionesEFE["Línea 1"], ...estacionesEFE["Línea 2"]];
+    const est = todas.find(e => e.id === id);
+    return est ? est.nombre : id;
+}
+
+function poblarSelectsFavorito(origenId, destinoId) {
+    const todas = [...estacionesEFE["Línea 1"], ...estacionesEFE["Línea 2"]]
+        .filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
+    const html = todas.map(e => `<option value="${e.id}">${e.nombre}</option>`).join('');
+    const selOrigen = document.getElementById('fav-origen');
+    const selDestino = document.getElementById('fav-destino');
+    selOrigen.innerHTML = html;
+    selDestino.innerHTML = html;
+    selOrigen.value  = origenId  || "16";
+    selDestino.value = destinoId || "35";
+}
+
+// --- Render principal de la lista ---
+function renderizarFavoritos() {
+    const favs  = cargarFavoritos();
+    const lista  = document.getElementById('favoritos-lista');
+    const vacio  = document.getElementById('favoritos-vacio');
+    const badge  = document.getElementById('fav-badge');
+
+    badge.textContent = favs.length;
+    badge.style.display = favs.length > 0 ? 'inline' : 'none';
+
+    lista.querySelectorAll('.favorito-card').forEach(el => el.remove());
+
+    if (favs.length === 0) {
+        vacio.style.display = 'block';
+        return;
+    }
+    vacio.style.display = 'none';
+
+    favs.forEach((fav, idx) => {
+        const card = document.createElement('div');
+        card.className = 'favorito-card';
+        card.dataset.idx = idx;
+
+        const nombreOrigen  = obtenerNombreEstacion(fav.origen);
+        const nombreDestino = obtenerNombreEstacion(fav.destino);
+
+        card.innerHTML = `
+            <div class="favorito-trigger">
+                <div class="favorito-info">
+                    <div class="favorito-nombre">${fav.nombre}</div>
+                    <div class="favorito-ruta">
+                        ${nombreOrigen}<span class="separador-ruta">→</span>${nombreDestino}
+                    </div>
+                </div>
+                <div class="favorito-acciones">
+                    <button class="btn-consultar-fav" data-idx="${idx}">Consultar</button>
+                    <button class="btn-editar-fav"   data-idx="${idx}" title="Editar ruta">✏️</button>
+                    <button class="btn-eliminar-fav" data-idx="${idx}" title="Eliminar ruta">✕</button>
+                </div>
+            </div>
+            <div class="favorito-resultados" id="fav-res-${idx}"></div>
+        `;
+        lista.appendChild(card);
+    });
+
+    // Eventos
+    lista.querySelectorAll('.btn-consultar-fav').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            consultarFavorito(parseInt(btn.dataset.idx), btn);
+        });
+    });
+
+    lista.querySelectorAll('.btn-editar-fav').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            abrirModalEditar(parseInt(btn.dataset.idx));
+        });
+    });
+
+    lista.querySelectorAll('.btn-eliminar-fav').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            eliminarFavorito(parseInt(btn.dataset.idx));
+        });
+    });
+}
+
+// --- Eliminar ---
+function eliminarFavorito(idx) {
+    if (!confirm('¿Eliminar esta ruta favorita?')) return;
+    const favs = cargarFavoritos();
+    favs.splice(idx, 1);
+    guardarFavoritos(favs);
+    renderizarFavoritos();
+}
+
+// --- Abrir modal en modo EDITAR ---
+function abrirModalEditar(idx) {
+    const favs = cargarFavoritos();
+    const fav  = favs[idx];
+    if (!fav) return;
+
+    poblarSelectsFavorito(fav.origen, fav.destino);
+    document.getElementById('fav-nombre').value = fav.nombre;
+
+    // Marcar modal en modo edición
+    const modal = document.getElementById('modal-favorito');
+    modal.dataset.editIdx = idx;
+    modal.dataset.modo = 'editar';
+    document.getElementById('modal-titulo-txt').textContent = 'Editar Ruta';
+    document.getElementById('btn-modal-guardar').textContent = '💾 Guardar cambios';
+
+    modal.classList.add('visible');
+    document.getElementById('fav-nombre').focus();
+}
+
+async function consultarFavorito(idx, btnEl) {
+    if (!baseDatos) return;
+
+    const favs = cargarFavoritos();
+    const fav = favs[idx];
+    if (!fav) return;
+
+    const resContainer = document.getElementById(`fav-res-${idx}`);
+    const card = resContainer.closest('.favorito-card');
+
+    // Toggle: si ya está abierto, cerrar
+    if (resContainer.classList.contains('visible')) {
+        resContainer.classList.remove('visible');
+        card.classList.remove('activo');
+        return;
+    }
+
+    // Cerrar otros abiertos
+    document.querySelectorAll('.favorito-resultados.visible').forEach(el => {
+        el.classList.remove('visible');
+        el.closest('.favorito-card').classList.remove('activo');
+    });
+
+    card.classList.add('activo');
+    resContainer.classList.add('visible');
+    resContainer.innerHTML = `<div class="fav-loading"><div class="spinner-mini"></div> Consultando…</div>`;
+
+    // Pequeño delay para mostrar el spinner
+    await new Promise(r => setTimeout(r, 100));
+
+    const ahora = new Date();
+    const hoyIso = ahora.toISOString().split('T')[0];
+    const listaFeriados = baseDatos.feriados || [];
+    const esFeriado = listaFeriados.includes(hoyIso);
+    const diaSemana = ahora.getDay();
+
+    // Es feriado hoy → mostrar mensaje
+    if (esFeriado) {
+        let nombreFeriado = "Feriado";
+        if (baseDatos.feriados_info) {
+            const fi = baseDatos.feriados_info.find(f => f.fecha === hoyIso);
+            if (fi) nombreFeriado = fi.nombre;
+        }
+        resContainer.innerHTML = `
+            <div class="fav-feriado-aviso">
+                <strong>🚫 Hoy es ${nombreFeriado}</strong>
+                El Biotrén no opera en feriados.
+            </div>
+        `;
+        return;
+    }
+
+    // Tipo de horario según día
+    let tipoHorario;
+    if (diaSemana === 0) tipoHorario = "festivo";
+    else if (diaSemana === 6) tipoHorario = "sabado";
+    else tipoHorario = "laboral";
+
+    const horaActualStr = ahora.getHours().toString().padStart(2, '0') + ":" +
+                          ahora.getMinutes().toString().padStart(2, '0');
+
+    // Obtener viajes (misma lógica que la búsqueda principal)
+    const key = `${fav.origen}-${fav.destino}`;
+    const datos = baseDatos.rutas[key];
+    let viajes = [];
+    if (datos) {
+        viajes = Array.isArray(datos) ? datos : (datos[tipoHorario] || []);
+    }
+
+    // Combinaciones si no hay ruta directa
+    if (viajes.length === 0 && fav.origen !== "16" && fav.destino !== "16") {
+        const t1 = baseDatos.rutas[`${fav.origen}-16`];
+        const t2 = baseDatos.rutas[`16-${fav.destino}`];
+        const tramo1 = t1 ? (Array.isArray(t1) ? t1 : (t1[tipoHorario] || [])) : [];
+        const tramo2 = t2 ? (Array.isArray(t2) ? t2 : (t2[tipoHorario] || [])) : [];
+        tramo1.forEach(x1 => {
+            const combina = tramo2.find(x2 => x2.s > x1.ll);
+            if (combina) {
+                viajes.push({ s: x1.s, ll: combina.ll, d: "Comb. Concepción", v: parseInt(x1.v) + parseInt(combina.v) });
+            }
+        });
+    }
+
+    // Solo próximos trenes (desde ahora)
+    const proximos = viajes.filter(t => t.s >= horaActualStr);
+
+    if (proximos.length === 0 && viajes.length === 0) {
+        resContainer.innerHTML = `<div class="fav-no-trenes">No hay trenes disponibles para esta ruta hoy.</div>`;
+        return;
+    }
+
+    if (proximos.length === 0) {
+        resContainer.innerHTML = `<div class="fav-no-trenes">No quedan más trenes por hoy. 🌙</div>`;
+        return;
+    }
+
+    // Mostrar máximo 4 próximos trenes
+    const aRenderizar = proximos.slice(0, 4);
+
+    resContainer.innerHTML = `
+        <div class="fav-trenes">
+            ${aRenderizar.map(t => `
+                <div class="fav-tren-item">
+                    <div class="fav-hora-bloque">
+                        <span class="fav-hora">${t.s}</span>
+                        <span class="fav-flecha">→</span>
+                        <span class="fav-hora">${t.ll}</span>
+                    </div>
+                    <div class="fav-meta">
+                        <span>⏱ ${t.d}</span>
+                        <span>💰 $${t.v}</span>
+                    </div>
+                </div>
+            `).join('')}
+            ${proximos.length > 4 ? `<div class="fav-no-trenes" style="padding-top:0">+${proximos.length - 4} más disponibles</div>` : ''}
+        </div>
+    `;
+}
+
+function inicializarFavoritos() {
+    poblarSelectsFavorito();
+    renderizarFavoritos();
+
+    const modal     = document.getElementById('modal-favorito');
+    const btnNueva  = document.getElementById('btn-nueva-ruta');
+    const btnCancelar = document.getElementById('btn-modal-cancelar');
+    const btnGuardar  = document.getElementById('btn-modal-guardar');
+    const inputNombre = document.getElementById('fav-nombre');
+
+    function resetModal() {
+        modal.dataset.modo    = 'crear';
+        modal.dataset.editIdx = '';
+        document.getElementById('modal-titulo-txt').textContent = 'Nueva Ruta Favorita';
+        btnGuardar.textContent = '⭐ Guardar ruta';
+        inputNombre.value = '';
+        poblarSelectsFavorito();
+    }
+
+    function cerrarModal() {
+        modal.classList.remove('visible');
+        resetModal();
+    }
+
+    // Abrir modal en modo CREAR
+    btnNueva.addEventListener('click', () => {
+        resetModal();
+        modal.classList.add('visible');
+        inputNombre.focus();
+    });
+
+    btnCancelar.addEventListener('click', cerrarModal);
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) cerrarModal();
+    });
+
+    // Guardar (crear o editar)
+    btnGuardar.addEventListener('click', () => {
+        const nombre  = inputNombre.value.trim();
+        const origen  = document.getElementById('fav-origen').value;
+        const destino = document.getElementById('fav-destino').value;
+
+        if (!nombre) {
+            inputNombre.focus();
+            inputNombre.style.borderColor = 'var(--rojo-vibrante)';
+            setTimeout(() => inputNombre.style.borderColor = '', 1500);
+            return;
+        }
+        if (origen === destino) {
+            alert("Selecciona estaciones diferentes.");
+            return;
+        }
+
+        const favs = cargarFavoritos();
+        const modo  = modal.dataset.modo;
+
+        if (modo === 'editar') {
+            const idx = parseInt(modal.dataset.editIdx);
+            favs[idx] = { nombre, origen, destino };
+        } else {
+            favs.push({ nombre, origen, destino });
+        }
+
+        guardarFavoritos(favs);
+        renderizarFavoritos();
+        cerrarModal();
+    });
+
+    // Enter en nombre
+    inputNombre.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') btnGuardar.click();
+    });
+}
+
+document.addEventListener('DOMContentLoaded', inicializarApp);
