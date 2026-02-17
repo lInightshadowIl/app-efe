@@ -1,5 +1,143 @@
 {
-  "ultima_update": "14-02-2026, 03:15:08 a. m.",
+  "ultima_update": "16-02-2026, 21:37:31",
+  "fechas_scrapeadas": {
+    "viernes": "2026-02-20",
+    "sabado": "2026-02-21",
+    "domingo": "2026-02-22"
+  },
+  "feriados": [
+    "2026-01-01",
+    "2026-04-03",
+    "2026-04-04",
+    "2026-05-01",
+    "2026-05-21",
+    "2026-06-21",
+    "2026-06-29",
+    "2026-07-16",
+    "2026-08-15",
+    "2026-09-18",
+    "2026-09-19",
+    "2026-10-12",
+    "2026-10-31",
+    "2026-11-01",
+    "2026-12-08",
+    "2026-12-25"
+  ],
+  "feriados_info": [
+    {
+      "fecha": "2026-01-01",
+      "nombre": "Año Nuevo",
+      "dia": "Jueves",
+      "irrenunciable": true,
+      "tipo": "civil"
+    },
+    {
+      "fecha": "2026-04-03",
+      "nombre": "Viernes Santo",
+      "dia": "Viernes",
+      "irrenunciable": false,
+      "tipo": "religioso"
+    },
+    {
+      "fecha": "2026-04-04",
+      "nombre": "Sábado Santo",
+      "dia": "Sábado",
+      "irrenunciable": false,
+      "tipo": "religioso"
+    },
+    {
+      "fecha": "2026-05-01",
+      "nombre": "Día del Trabajador",
+      "dia": "Viernes",
+      "irrenunciable": true,
+      "tipo": "civil"
+    },
+    {
+      "fecha": "2026-05-21",
+      "nombre": "Día de las Glorias Navales",
+      "dia": "Jueves",
+      "irrenunciable": false,
+      "tipo": "civil"
+    },
+    {
+      "fecha": "2026-06-21",
+      "nombre": "Día Nacional de los Pueblos Indígenas",
+      "dia": "Domingo",
+      "irrenunciable": false,
+      "tipo": "civil"
+    },
+    {
+      "fecha": "2026-06-29",
+      "nombre": "San Pedro y San Pablo",
+      "dia": "Lunes",
+      "irrenunciable": false,
+      "tipo": "religioso"
+    },
+    {
+      "fecha": "2026-07-16",
+      "nombre": "Día de la Virgen del Carmen",
+      "dia": "Jueves",
+      "irrenunciable": false,
+      "tipo": "religioso"
+    },
+    {
+      "fecha": "2026-08-15",
+      "nombre": "Asunción de la Virgen",
+      "dia": "Sábado",
+      "irrenunciable": false,
+      "tipo": "religioso"
+    },
+    {
+      "fecha": "2026-09-18",
+      "nombre": "Día de la Independencia de Chile",
+      "dia": "Viernes",
+      "irrenunciable": true,
+      "tipo": "civil"
+    },
+    {
+      "fecha": "2026-09-19",
+      "nombre": "Día de las Glorias del Ejército",
+      "dia": "Sábado",
+      "irrenunciable": true,
+      "tipo": "civil"
+    },
+    {
+      "fecha": "2026-10-12",
+      "nombre": "Día del Encuentro de Dos Mundos",
+      "dia": "Lunes",
+      "irrenunciable": false,
+      "tipo": "civil"
+    },
+    {
+      "fecha": "2026-10-31",
+      "nombre": "Día de las Iglesias Evangélicas y Protestantes",
+      "dia": "Sábado",
+      "irrenunciable": false,
+      "tipo": "religioso"
+    },
+    {
+      "fecha": "2026-11-01",
+      "nombre": "Día de Todos los Santos",
+      "dia": "Domingo",
+      "irrenunciable": false,
+      "tipo": "religioso"
+    },
+    {
+      "fecha": "2026-12-08",
+      "nombre": "Inmaculada Concepción",
+      "dia": "Martes",
+      "irrenunciable": false,
+      "tipo": "religioso"
+    },
+    {
+      "fecha": "2026-12-25",
+      "nombre": "Navidad",
+      "dia": "Viernes",
+      "irrenunciable": true,
+      "tipo": "civil"
+    }
+  ],
+  "advertencias": [],
   "rutas": {
     "11-12": {
       "laboral": [
@@ -212287,24 +212425,5 @@
         }
       ]
     }
-  },
-  "feriados": [
-    "2026-01-01",
-    "2026-04-03",
-    "2026-04-04",
-    "2026-05-01",
-    "2026-05-21",
-    "2026-06-21",
-    "2026-06-29",
-    "2026-07-16",
-    "2026-08-15",
-    "2026-09-18",
-    "2026-09-19",
-    "2026-10-12",
-    "2026-10-31",
-    "2026-11-01",
-    "2026-12-08",
-    "2026-12-25",
-    "2026-12-31"
-  ]
+  }
 }
