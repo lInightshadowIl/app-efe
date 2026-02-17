@@ -127,22 +127,22 @@
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/service-worker.js')
                 .then(registration => {
-                    // Verificar actualizaciones cada hora
+                    // 1. Mantenemos tu verificación cada hora
                     setInterval(() => {
+                        console.log('🔍 Buscando actualizaciones...');
                         registration.update();
                     }, 60 * 60 * 1000);
                     
-                    // Detectar nuevas versiones
                     registration.addEventListener('updatefound', () => {
                         const newWorker = registration.installing;
                         console.log('🔄 Nueva versión detectada...');
                         
                         newWorker.addEventListener('statechange', () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // Hay una nueva versión disponible
-                                console.log('✨ Nueva versión lista. Actualizando automáticamente...');
+                                // 2. Aquí es donde eliminamos cualquier mensaje o pregunta
+                                console.log('✨ Versión lista. Aplicando automáticamente...');
                                 
-                                // CAMBIO: Se ejecuta directamente sin preguntar al usuario
+                                // Mandamos la orden directa de saltar la espera
                                 newWorker.postMessage({ type: 'SKIP_WAITING' });
                             }
                         });
@@ -153,15 +153,20 @@
                 });
         });
         
-        // Detectar cuando el Service Worker toma control para recargar la página
+        // 3. Este bloque es vital: cuando el nuevo SW toma el mando, recarga la app
+        let refreshing = false; // Evita bucles de recarga
         navigator.serviceWorker.addEventListener('controllerchange', () => {
-            console.log('🔄 Service Worker actualizado, recargando...');
-            window.location.reload();
+            if (!refreshing) {
+                console.log('🔄 App actualizada. Recargando para mostrar cambios...');
+                window.location.reload();
+                refreshing = true;
+            }
         });
     } else {
-        console.warn('⚠️ Service Workers no soportados en este navegador');
+        console.warn('⚠️ Service Workers no soportados');
     }
 </script>
 </body>
 
 </html>
+
