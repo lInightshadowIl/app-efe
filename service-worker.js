@@ -1,5 +1,5 @@
 // Incrementa este número cada vez que hagas un deploy
-const CACHE_VERSION = 'biotren-v3.0';
+const CACHE_VERSION = 'biotren-v3.1.0';
 
 // Solo cacheamos para poder funcionar OFFLINE — no para servir por defecto
 const ASSETS_OFFLINE = [
