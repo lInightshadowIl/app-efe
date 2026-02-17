@@ -584,7 +584,6 @@ async function consultarFavorito(idx, btnEl) {
                     </div>
                 </div>
             `).join('')}
-            ${proximos.length > 5 ? `<div class="fav-mas-disponibles">📜 Desliza para ver todos los ${proximos.length} trenes disponibles</div>` : ''}
         </div>
     `;
 }
@@ -665,3 +664,4 @@ function inicializarFavoritos() {
 }
 
 document.addEventListener('DOMContentLoaded', inicializarApp);
+
