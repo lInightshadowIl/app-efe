@@ -14,6 +14,53 @@ jobs:
     environment: Production
     
     steps:
+      - name: 📣 Notificar inicio del workflow
+        run: |
+          FECHA_CHILE=$(TZ='America/Santiago' date +'%Y-%m-%d')
+          HORA_CHILE=$(TZ='America/Santiago' date +'%H:%M:%S')
+          HORA_INICIO_UTC=$(date -u +%s)
+
+          # El workflow tarda ~5 minutos aprox, estimamos fin
+          HORA_FIN_ESTIMADA=$(TZ='America/Santiago' date -d "+5 minutes" +'%H:%M:%S')
+          TIMESTAMP_ISO=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          curl -s -o /dev/null -H "Content-Type: application/json" \
+            -d "{
+              \"username\": \"Biotrén Bot\",
+              \"embeds\": [{
+                \"title\": \"🚂 Iniciando Scraper Semanal Biotrén\",
+                \"description\": \"El workflow ha comenzado a ejecutarse correctamente.\",
+                \"color\": 3066993,
+                \"fields\": [
+                  {
+                    \"name\": \"📅 Fecha\",
+                    \"value\": \"$FECHA_CHILE\",
+                    \"inline\": true
+                  },
+                  {
+                    \"name\": \"🕐 Hora de inicio\",
+                    \"value\": \"$HORA_CHILE (Santiago)\",
+                    \"inline\": true
+                  },
+                  {
+                    \"name\": \"⏳ Finalización estimada\",
+                    \"value\": \"~$HORA_FIN_ESTIMADA (Santiago)\",
+                    \"inline\": true
+                  },
+                  {
+                    \"name\": \"🔗 Ver ejecución\",
+                    \"value\": \"[Abrir en GitHub](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\",
+                    \"inline\": false
+                  }
+                ],
+                \"footer\": {
+                  \"text\": \"GitHub Actions • Scraper Semanal\"
+                },
+                \"timestamp\": \"$TIMESTAMP_ISO\"
+              }]
+            }" \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
+
       - name: 📥 Checkout repositorio
         uses: actions/checkout@v4
         with:
@@ -22,7 +69,7 @@ jobs:
       - name: 🟢 Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'  # ⭐ CAMBIAR DE 18 A 20
+          node-version: '20'
       
       - name: 🕐 Mostrar hora actual en Chile
         run: |
@@ -58,7 +105,6 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "GitHub Actions Bot"
           
-          # Primero hacer pull por si hay cambios remotos
           git pull --rebase origin main || git pull --rebase origin master || true
           
           git add horarios.json
@@ -73,7 +119,7 @@ jobs:
         if: failure()
         run: |
           FECHA_CHILE=$(TZ='America/Santiago' date +'%Y-%m-%d %H:%M:%S')
-          curl -H "Content-Type: application/json" \
+          curl -s -o /dev/null -H "Content-Type: application/json" \
             -d "{
               \"username\": \"Biotrén Bot\",
               \"embeds\": [{
