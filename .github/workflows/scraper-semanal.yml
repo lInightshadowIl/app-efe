@@ -18,10 +18,9 @@ jobs:
         run: |
           FECHA_CHILE=$(TZ='America/Santiago' date +'%Y-%m-%d')
           HORA_CHILE=$(TZ='America/Santiago' date +'%H:%M:%S')
-          HORA_INICIO_UTC=$(date -u +%s)
 
-          # El workflow tarda ~5 minutos aprox, estimamos fin
-          HORA_FIN_ESTIMADA=$(TZ='America/Santiago' date -d "+5 minutes" +'%H:%M:%S')
+          # El workflow tarda ~35 minutos aprox, estimamos fin
+          HORA_FIN_ESTIMADA=$(TZ='America/Santiago' date -d "+35 minutes" +'%H:%M:%S')
           TIMESTAMP_ISO=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
           curl -s -o /dev/null -H "Content-Type: application/json" \
@@ -69,24 +68,25 @@ jobs:
       - name: 🟢 Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'          # LTS hasta abril 2027 — actualizar a 24 en ~oct 2026
       
       - name: 🕐 Mostrar hora actual en Chile
         run: |
           echo "Hora UTC: $(date -u)"
-          echo "Hora Chile (estimada): $(TZ='America/Santiago' date)"
+          echo "Hora Chile: $(TZ='America/Santiago' date)"
       
       - name: 📦 Instalar dependencias
         working-directory: ./efe
         run: npm install
       
       - name: 🚂 Ejecutar scraper
+        id: scraper
         working-directory: ./efe
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           TZ: America/Santiago
         run: node index.js
-        continue-on-error: true
+        # Sin continue-on-error: si el scraper falla de verdad, el workflow falla
       
       - name: 📋 Verificar archivo generado
         run: |
@@ -104,9 +104,12 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "GitHub Actions Bot"
-          
+
+          # Guardar cambios temporalmente para poder hacer pull limpio
+          git stash --include-untracked || true
           git pull --rebase origin main || git pull --rebase origin master || true
-          
+          git stash pop || true
+
           git add horarios.json
           if git diff --staged --quiet; then
             echo "Sin cambios en horarios.json"
