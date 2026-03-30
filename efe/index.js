@@ -27,6 +27,38 @@ function obtenerFechaChile() {
     });
 }
 
+const formatearFecha = (fecha) => {
+    const year = fecha.getFullYear();
+    const month = String(fecha.getMonth() + 1).padStart(2, '0');
+    const day = String(fecha.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+/**
+ * Busca el primer día hábil no feriado retrocediendo desde el viernes.
+ * Orden de búsqueda: viernes → jueves → miércoles → martes → lunes
+ * Retorna null si toda la semana laboral es feriado.
+ */
+function obtenerFechaLaboral(viernesDate, feriadosArray) {
+    const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+    for (let retroceso = 0; retroceso <= 4; retroceso++) {
+        const candidato = new Date(viernesDate);
+        candidato.setDate(viernesDate.getDate() - retroceso);
+        const fechaStr = formatearFecha(candidato);
+
+        if (!feriadosArray.includes(fechaStr)) {
+            return {
+                fecha: fechaStr,
+                dia: diasSemana[candidato.getDay()],
+                retrocesoDias: retroceso   // 0 = viernes, 1 = jueves, etc.
+            };
+        }
+    }
+
+    return null; // Toda la semana laboral es feriado
+}
+
 function obtenerFechasSemanaActual(feriadosArray, feriadosInfo) {
     const hoy = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
     const diaSemana = hoy.getDay();
@@ -42,13 +74,6 @@ function obtenerFechasSemanaActual(feriadosArray, feriadosInfo) {
     
     const domingo = new Date(viernes);
     domingo.setDate(viernes.getDate() + 2);
-    
-    const formatearFecha = (fecha) => {
-        const year = fecha.getFullYear();
-        const month = String(fecha.getMonth() + 1).padStart(2, '0');
-        const day = String(fecha.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-    };
     
     const viernesFecha = formatearFecha(viernes);
     const sabadoFecha = formatearFecha(sabado);
@@ -79,7 +104,9 @@ function obtenerFechasSemanaActual(feriadosArray, feriadosInfo) {
         }
     }
     
-    const viernesEsFeriado = feriadosArray.includes(viernesFecha);
+    // ⭐ Buscar fecha laboral de referencia (viernes → jueves → ... → lunes)
+    const laboralRef = obtenerFechaLaboral(viernes, feriadosArray);
+    
     const sabadoEsFeriado = feriadosArray.includes(sabadoFecha);
     
     if (feriadosEnSemana.length > 0) {
@@ -89,18 +116,21 @@ function obtenerFechasSemanaActual(feriadosArray, feriadosInfo) {
         });
         console.log('');
     }
+
+    if (laboralRef && laboralRef.retrocesoDias > 0) {
+        console.log(`📅 Viernes ${viernesFecha} es feriado → usando ${laboralRef.dia} ${laboralRef.fecha} como referencia laboral`);
+    }
     
     return {
         viernes: viernesFecha,
         sabado: sabadoFecha,
         domingo: domingoFecha,
-        viernesEsFeriado,
+        laboralRef,            // { fecha, dia, retrocesoDias } | null
         sabadoEsFeriado,
         feriadosEnSemana
     };
 }
 
-// ⭐ FIX: Ahora acepta 3 estados: error (rojo), advertencia (amarillo), éxito (verde)
 async function notificarDiscord(mensaje, estado = 'exito') {
     const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
     if (!webhookUrl) {
@@ -109,9 +139,9 @@ async function notificarDiscord(mensaje, estado = 'exito') {
     }
 
     const config = {
-        error:      { title: '❌ Error en Scraper Biotrén',          color: 15158332 }, // rojo
-        advertencia:{ title: '⚠️ Scraper Biotrén - Con advertencias', color: 16776960 }, // amarillo
-        exito:      { title: '✅ Scraper Biotrén Completado',          color: 3066993  }, // verde
+        error:      { title: '❌ Error en Scraper Biotrén',          color: 15158332 },
+        advertencia:{ title: '⚠️ Scraper Biotrén - Con advertencias', color: 16776960 },
+        exito:      { title: '✅ Scraper Biotrén Completado',          color: 3066993  },
     };
 
     const { title, color } = config[estado] ?? config.exito;
@@ -121,9 +151,7 @@ async function notificarDiscord(mensaje, estado = 'exito') {
         description: mensaje,
         color,
         timestamp: new Date().toISOString(),
-        footer: {
-            text: 'Scraper Automático | Hora Chile'
-        }
+        footer: { text: 'Scraper Automático | Hora Chile' }
     };
 
     try {
@@ -196,12 +224,25 @@ async function iniciarScraper() {
         const fases = [];
         const advertencias = [];
         
-        if (!fechas.viernesEsFeriado) {
-            fases.push({ id: 'laboral', fecha: fechas.viernes });
+        // ⭐ CAMBIO PRINCIPAL: usar laboralRef en vez de verificar solo el viernes
+        if (fechas.laboralRef) {
+            const { fecha, dia, retrocesoDias } = fechas.laboralRef;
+
+            if (retrocesoDias === 0) {
+                // Viernes disponible — comportamiento normal
+                fases.push({ id: 'laboral', fecha });
+            } else {
+                // Viernes feriado → usando un día anterior como referencia
+                const feriadoViernes = feriadosInfo.find(f => f.fecha === fechas.viernes);
+                const nombreFeriado = feriadoViernes ? feriadoViernes.nombre : 'Feriado';
+                advertencias.push(
+                    `⚠️ VIERNES ${fechas.viernes} es ${nombreFeriado} — usando ${dia} ${fecha} como referencia de horario LABORAL`
+                );
+                fases.push({ id: 'laboral', fecha });
+            }
         } else {
-            const feriadoInfo = feriadosInfo.find(f => f.fecha === fechas.viernes);
-            const nombreFeriado = feriadoInfo ? feriadoInfo.nombre : 'Feriado';
-            advertencias.push(`⚠️ VIERNES ${fechas.viernes} es ${nombreFeriado} - Biotrén NO opera, se omite scraping`);
+            // Toda la semana laboral (lun-vie) son feriados
+            advertencias.push(`⚠️ Toda la semana laboral es feriado — no se scrapeará horario LABORAL`);
         }
         
         if (!fechas.sabadoEsFeriado) {
@@ -209,10 +250,10 @@ async function iniciarScraper() {
         } else {
             const feriadoInfo = feriadosInfo.find(f => f.fecha === fechas.sabado);
             const nombreFeriado = feriadoInfo ? feriadoInfo.nombre : 'Feriado';
-            advertencias.push(`⚠️ SÁBADO ${fechas.sabado} es ${nombreFeriado} - Biotrén NO opera, se omite scraping`);
+            advertencias.push(`⚠️ SÁBADO ${fechas.sabado} es ${nombreFeriado} — se omite scraping de SÁBADO`);
         }
         
-        // Domingo siempre
+        // Domingo siempre se scrapea (es festivo por definición)
         fases.push({ id: 'festivo', fecha: fechas.domingo });
 
         if (advertencias.length > 0) {
@@ -222,7 +263,7 @@ async function iniciarScraper() {
         }
 
         if (fases.length === 0) {
-            const mensajeError = '❌ CRÍTICO: Todos los días son feriados. No hay nada que scrapear.';
+            const mensajeError = '❌ CRÍTICO: No hay ningún día disponible para scrapear.';
             console.error(mensajeError);
             await notificarDiscord(mensajeError, 'error');
             return;
@@ -232,12 +273,18 @@ async function iniciarScraper() {
         fases.forEach(f => console.log(`   ${f.id}: ${f.fecha}`));
 
         // 5. Inicializar base de datos
+        // ⭐ Guardamos qué fecha se usó realmente como referencia laboral
+        const laboralUsado = fechas.laboralRef
+            ? { fecha: fechas.laboralRef.fecha, dia: fechas.laboralRef.dia }
+            : null;
+
         let baseDeDatos = {
             ultima_update: obtenerFechaChile(),
             fechas_scrapeadas: {
                 viernes: fechas.viernes,
                 sabado: fechas.sabado,
-                domingo: fechas.domingo
+                domingo: fechas.domingo,
+                laboral_referencia: laboralUsado  // ej: { fecha: "2026-04-02", dia: "Jueves" }
             },
             feriados: feriadosChile,
             feriados_info: feriadosInfo,
@@ -332,10 +379,6 @@ async function iniciarScraper() {
         console.log("\n✨ ¡PROCESO FINALIZADO CON ÉXITO!");
         console.log(`📁 Archivo generado en: ${RUTA_SALIDA}`);
         
-        // ⭐ FIX: Determinar estado real de la notificación
-        //   - 'error'       → errores de red excesivos (algo salió mal de verdad)
-        //   - 'advertencia' → feriados omitidos (comportamiento normal, no es un error)
-        //   - 'exito'       → todo scrapeado sin omisiones
         let estadoNotificacion;
         if (erroresEncontrados > 100) {
             estadoNotificacion = 'error';
@@ -345,11 +388,21 @@ async function iniciarScraper() {
             estadoNotificacion = 'exito';
         }
 
+        // Descripción legible de qué fecha se usó para el horario laboral
+        let laboralDesc;
+        if (!fechas.laboralRef) {
+            laboralDesc = '❌ Toda la semana laboral es feriado (omitido)';
+        } else if (fechas.laboralRef.retrocesoDias === 0) {
+            laboralDesc = `✅ Scrapeado (${fechas.viernes})`;
+        } else {
+            laboralDesc = `⚠️ Viernes feriado → referencia: ${fechas.laboralRef.dia} ${fechas.laboralRef.fecha}`;
+        }
+
         let mensajeExito = `
 **Scraping completado exitosamente** 🎉
 
 📅 **Fechas procesadas:**
-- Viernes ${fechas.viernes}: ${fechas.viernesEsFeriado ? '❌ FERIADO (omitido)' : '✅ Scrapeado'}
+- Laboral: ${laboralDesc}
 - Sábado ${fechas.sabado}: ${fechas.sabadoEsFeriado ? '❌ FERIADO (omitido)' : '✅ Scrapeado'}
 - Domingo ${fechas.domingo}: ✅ Scrapeado
 
