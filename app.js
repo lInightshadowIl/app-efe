@@ -1,3 +1,11 @@
+// ✅ FIX: Retorna fecha local como "YYYY-MM-DD" (evita bug UTC de toISOString)
+function getFechaLocal(fecha = new Date()) {
+    const y = fecha.getFullYear();
+    const m = String(fecha.getMonth() + 1).padStart(2, '0');
+    const d = String(fecha.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
 let baseDatos = null;
 
 async function cargarDatos() {
@@ -78,7 +86,7 @@ async function inicializarApp() {
             }
 
             const ahora = new Date();
-            const hoyIso = ahora.toISOString().split('T')[0];
+            const hoyIso = getFechaLocal(ahora); // ✅ FIX: era toISOString() que usaba UTC
             const listaFeriados = baseDatos.feriados || [];
             const esFeriado = listaFeriados.includes(hoyIso);
             const diaSemana = ahora.getDay();
@@ -235,7 +243,7 @@ function renderizarHorarios(trenes, horaActual, esHoy) {
 }
 
 function verificarFeriado() {
-    const hoy = new Date().toISOString().split('T')[0];
+    const hoy = getFechaLocal(); // ✅ FIX: era toISOString() que usaba UTC
     const aviso = document.getElementById('aviso-feriado');
     const avisoSemana = document.getElementById('aviso-feriados-semana');
     
@@ -261,7 +269,7 @@ function verificarFeriado() {
     if (baseDatos && baseDatos.feriados_semana && baseDatos.feriados_semana.length > 0) {
         const manana = new Date();
         manana.setDate(manana.getDate() + 1);
-        const mananaStr = manana.toISOString().split('T')[0];
+        const mananaStr = getFechaLocal(manana); // ✅ FIX: era toISOString() que usaba UTC
         
         const feriadoManana = baseDatos.feriados_semana.find(f => f.fecha === mananaStr);
         
@@ -501,7 +509,7 @@ async function consultarFavorito(idx, btnEl) {
     await new Promise(r => setTimeout(r, 100));
 
     const ahora = new Date();
-    const hoyIso = ahora.toISOString().split('T')[0];
+    const hoyIso = getFechaLocal(ahora); // ✅ FIX: era toISOString() que usaba UTC
     const listaFeriados = baseDatos.feriados || [];
     const esFeriado = listaFeriados.includes(hoyIso);
     const diaSemana = ahora.getDay();
