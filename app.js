@@ -10,11 +10,23 @@ let baseDatos = null;
 
 async function cargarDatos() {
     const contenedor = document.getElementById('resultados-container');
-    
-    try {
-        const respuestaSrv = await fetch(`horarios.json?v=${Date.now()}`);
-        const dataNueva = await respuestaSrv.json();
+    const localStored = localStorage.getItem('baseDatos');
 
+    // Si hay datos locales, usarlos de inmediato mientras se intenta actualizar en segundo plano
+    if (localStored) {
+        baseDatos = JSON.parse(localStored);
+    }
+
+    try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s máximo
+
+        const respuestaSrv = await fetch(`horarios.json?v=${Date.now()}`, {
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
+        const dataNueva = await respuestaSrv.json();
         const ultimaLocal = localStorage.getItem('ultima_update');
         const ultimaServidor = dataNueva.ultima_update;
 
@@ -22,18 +34,20 @@ async function cargarDatos() {
             baseDatos = dataNueva;
             localStorage.setItem('baseDatos', JSON.stringify(dataNueva));
             localStorage.setItem('ultima_update', ultimaServidor);
+            console.log("✅ Horarios actualizados desde el servidor");
         } else {
-            const localStored = localStorage.getItem('baseDatos');
-            baseDatos = JSON.parse(localStored);
-
+            console.log("✅ Horarios en caché vigentes");
         }
 
     } catch (error) {
-        console.warn("⚠️ Sin conexión. Intentando usar datos locales...");
-        const localStored = localStorage.getItem('baseDatos');
-        if (localStored) {
-            baseDatos = JSON.parse(localStored);
-        } else {
+        const esTimeout = error.name === 'AbortError';
+        console.warn(esTimeout
+            ? "⚠️ Tiempo de espera agotado. Usando datos locales..."
+            : "⚠️ Sin conexión. Usando datos locales..."
+        );
+
+        if (!baseDatos) {
+            // Solo falla si tampoco había datos locales (primera vez sin internet)
             contenedor.innerHTML = "<p class='no-data'>Primera vez: Necesitas internet para descargar horarios.</p>";
             throw error;
         }
