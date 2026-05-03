@@ -1,12 +1,12 @@
 {
-  "ultima_update": "26-04-2026, 12:29:57",
+  "ultima_update": "03-05-2026, 12:35:17",
   "fechas_scrapeadas": {
-    "viernes": "2026-05-01",
-    "sabado": "2026-05-02",
-    "domingo": "2026-05-03",
+    "viernes": "2026-05-08",
+    "sabado": "2026-05-09",
+    "domingo": "2026-05-10",
     "laboral_referencia": {
-      "fecha": "2026-04-30",
-      "dia": "Jueves"
+      "fecha": "2026-05-08",
+      "dia": "Viernes"
     }
   },
   "feriados": [
@@ -141,17 +141,8 @@
       "tipo": "civil"
     }
   ],
-  "feriados_semana": [
-    {
-      "fecha": "2026-05-01",
-      "dia": "Viernes",
-      "nombre": "Día del Trabajador",
-      "tipo": "civil"
-    }
-  ],
-  "advertencias": [
-    "⚠️ VIERNES 2026-05-01 es Día del Trabajador — usando Jueves 2026-04-30 como referencia de horario LABORAL"
-  ],
+  "feriados_semana": [],
+  "advertencias": [],
   "rutas": {
     "11-12": {
       "laboral": [
