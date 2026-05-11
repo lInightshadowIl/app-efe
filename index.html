@@ -1,175 +1,458 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#0b0e14">
-    <title>Biotren App - Horarios</title>
-    <meta name="description" content="Consulta los horarios del Biotren offline.">
-    <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css">
-       <!-- Apple Touch Icons -->
-    <link rel="icon" href="icons/icon-32x32.png" type="image/png">
-    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144x144.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="icons/icon-120x120.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="icons/icon-114x114.png">
-    <link rel="apple-touch-icon" sizes="76x76" href="icons/icon-76x76.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="icons/icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="60x60" href="icons/icon-60x60.png">
-    <link rel="apple-touch-icon" sizes="57x57" href="icons/icon-57x57.png">
-    <link rel="apple-touch-icon" href="https://www.efe.cl/wp-content/themes/efe/assets/img/logo-efe.png">
-</head>
-<body>
-    <div class="app-container">
-        <header>
-            <h1>🚉 Biotren Horarios</h1>
-            <p id="fecha-actual"></p>
-        </header>
+const axios = require('axios');
+const cheerio = require('cheerio');
+const fs = require('fs');
+const path = require('path');
+const cliProgress = require('cli-progress');
 
-        <div id="aviso-feriado" class="hidden"></div>
-        <div id="aviso-feriados-semana" class="hidden"></div>
+// Configuración de Sigilo
+const DELAY_MIN = 1500; 
+const DELAY_MAX = 3500; 
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-        <!-- RUTAS FAVORITAS -->
-        <section class="favoritos-section" id="favoritos-section">
-            <div class="favoritos-header">
-                <div class="favoritos-titulo">
-                    ⭐ Mis Rutas <span class="fav-badge" id="fav-badge" style="display:none">0</span>
-                </div>
-                <button class="btn-nueva-ruta" id="btn-nueva-ruta">
-                    + Nueva ruta
-                </button>
-            </div>
-            <div class="favoritos-lista" id="favoritos-lista">
-                <div class="favoritos-vacio" id="favoritos-vacio">
-                    <span>⭐</span>
-                    Agrega rutas favoritas para consultar horarios con un solo toque.
-                </div>
-            </div>
-        </section>
+// Rutas de archivos
+const RUTA_ESTACIONES = path.join(__dirname, 'estaciones.json');
+const RUTA_FERIADOS = path.join(__dirname, 'feriados.json');
+const RUTA_SALIDA = path.join(__dirname, '..', 'horarios.json');
+const RUTA_VERSION = path.join(__dirname, '..', 'version.json');
 
-        <div class="seccion-divisor">
-            <span>Búsqueda manual</span>
-        </div>
+function obtenerFechaChile() {
+    return new Date().toLocaleString('es-CL', { 
+        timeZone: 'America/Santiago',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    });
+}
 
-        <section class="selector-group">
-            <label>¿Cuándo viajas?</label>
-            <select id="dia-select">
-                <option value="hoy">Hoy (Tiempo Real)</option>
-                <option value="laboral">Lunes a Viernes</option>
-                <option value="sabado">Sábado</option>
-                <option value="festivo">Domingo o Feriado</option>
-            </select>
+const formatearFecha = (fecha) => {
+    const year = fecha.getFullYear();
+    const month = String(fecha.getMonth() + 1).padStart(2, '0');
+    const day = String(fecha.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
 
-            <div class="estaciones-container">
-                <label>Origen:</label>
-                <select id="origen-select"></select>
+/**
+ * Busca el primer día hábil no feriado retrocediendo desde el viernes.
+ * Orden de búsqueda: viernes → jueves → miércoles → martes → lunes
+ * Retorna null si toda la semana laboral es feriado.
+ */
+function obtenerFechaLaboral(viernesDate, feriadosArray) {
+    const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
-                <button id="btn-swap" type="button" class="swap-button">
-                    🔄 Intercambiar Estaciones
-                </button>
+    for (let retroceso = 0; retroceso <= 4; retroceso++) {
+        const candidato = new Date(viernesDate);
+        candidato.setDate(viernesDate.getDate() - retroceso);
+        const fechaStr = formatearFecha(candidato);
 
-                <label>Destino:</label>
-                <select id="destino-select"></select>
-            </div>
+        if (!feriadosArray.includes(fechaStr)) {
+            return {
+                fecha: fechaStr,
+                dia: diasSemana[candidato.getDay()],
+                retrocesoDias: retroceso   // 0 = viernes, 1 = jueves, etc.
+            };
+        }
+    }
 
-            <div class="filtro-tiempo">
-                <label class="switch">
-                    <input type="checkbox" id="ver-todo">
-                    <span class="slider"></span>
-                </label>
-                <span>Mostrar horarios pasados</span>
-            </div>
+    return null; // Toda la semana laboral es feriado
+}
 
-            <button id="buscar-btn">Consultar Horarios</button>
-        </section>
-
-        <section id="resultados-container">
-            <p class="no-data">Selecciona tu ruta para ver los próximos trenes.</p>
-        </section>
-
-        <footer class="app-footer">
-            <span>Horarios actualizados: <strong id="footer-ultima-update">—</strong></span>
-            <span id="conexion-dot" class="conexion-dot"></span>
-        </footer>
-    </div>
+function obtenerFechasSemanaActual(feriadosArray, feriadosInfo) {
+    const hoy = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Santiago' }));
+    const diaSemana = hoy.getDay();
     
-    <!-- Modal Crear / Editar Ruta Favorita -->
-    <div class="modal-overlay" id="modal-favorito" data-modo="crear">
-        <div class="modal-box">
-            <div class="modal-titulo">⭐ <span id="modal-titulo-txt">Nueva Ruta Favorita</span></div>
+    let diasHastaViernes = 5 - diaSemana;
+    if (diasHastaViernes <= 0) diasHastaViernes += 7;
+    
+    const viernes = new Date(hoy);
+    viernes.setDate(hoy.getDate() + diasHastaViernes);
+    
+    const sabado = new Date(viernes);
+    sabado.setDate(viernes.getDate() + 1);
+    
+    const domingo = new Date(viernes);
+    domingo.setDate(viernes.getDate() + 2);
+    
+    const viernesFecha = formatearFecha(viernes);
+    const sabadoFecha = formatearFecha(sabado);
+    const domingoFecha = formatearFecha(domingo);
+    
+    const lunes = new Date(viernes);
+    lunes.setDate(viernes.getDate() - 4);
+    
+    const diasSemana = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+    const feriadosEnSemana = [];
+    
+    for (let i = 0; i < 7; i++) {
+        const diaActual = new Date(lunes);
+        diaActual.setDate(lunes.getDate() + i);
+        const fechaStr = formatearFecha(diaActual);
+        const nombreDia = diasSemana[diaActual.getDay()];
+        
+        if (feriadosArray.includes(fechaStr)) {
+            const feriadoInfo = feriadosInfo.find(f => f.fecha === fechaStr);
+            const nombreFeriado = feriadoInfo ? feriadoInfo.nombre : 'Feriado';
+            
+            feriadosEnSemana.push({
+                fecha: fechaStr,
+                dia: nombreDia,
+                nombre: nombreFeriado,
+                tipo: feriadoInfo ? feriadoInfo.tipo : 'desconocido'
+            });
+        }
+    }
+    
+    // ⭐ Buscar fecha laboral de referencia (viernes → jueves → ... → lunes)
+    const laboralRef = obtenerFechaLaboral(viernes, feriadosArray);
+    
+    const sabadoEsFeriado = feriadosArray.includes(sabadoFecha);
+    
+    if (feriadosEnSemana.length > 0) {
+        console.log(`\n⚠️  Feriados detectados en la semana:`);
+        feriadosEnSemana.forEach(f => {
+            console.log(`   - ${f.dia} ${f.fecha}: ${f.nombre}`);
+        });
+        console.log('');
+    }
 
-            <div class="modal-campo">
-                <label>Nombre de la ruta</label>
-                <input type="text" id="fav-nombre" placeholder="Ej: Trabajo, Casa, Universidad…" maxlength="30">
-            </div>
-            <div class="modal-campo">
-                <label>Origen</label>
-                <select id="fav-origen"></select>
-            </div>
-            <div class="modal-campo">
-                <label>Destino</label>
-                <select id="fav-destino"></select>
-            </div>
+    if (laboralRef && laboralRef.retrocesoDias > 0) {
+        console.log(`📅 Viernes ${viernesFecha} es feriado → usando ${laboralRef.dia} ${laboralRef.fecha} como referencia laboral`);
+    }
+    
+    return {
+        viernes: viernesFecha,
+        sabado: sabadoFecha,
+        domingo: domingoFecha,
+        laboralRef,            // { fecha, dia, retrocesoDias } | null
+        sabadoEsFeriado,
+        feriadosEnSemana
+    };
+}
 
-            <div class="modal-botones">
-                <button class="btn-modal-cancelar" id="btn-modal-cancelar">Cancelar</button>
-                <button class="btn-modal-guardar"  id="btn-modal-guardar">⭐ Guardar ruta</button>
-            </div>
-        </div>
-    </div>
+async function notificarDiscord(mensaje, estado = 'exito') {
+    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+    if (!webhookUrl) {
+        console.log('⚠️ No hay webhook de Discord configurado');
+        return;
+    }
 
+    const config = {
+        error:      { title: '❌ Error en Scraper Biotrén',          color: 15158332 },
+        advertencia:{ title: '⚠️ Scraper Biotrén - Con advertencias', color: 16776960 },
+        exito:      { title: '✅ Scraper Biotrén Completado',          color: 3066993  },
+    };
 
-    <script src="estaciones.js"></script>
-    <script src="app.js"></script>
+    const { title, color } = config[estado] ?? config.exito;
 
-    <!-- Registro del Service Worker mejorado -->
-<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(registration => {
-                    // 1. Mantenemos tu verificación cada hora
-                    setInterval(() => {
-                        registration.update();
-                    }, 60 * 60 * 1000);
-                    
-                    registration.addEventListener('updatefound', () => {
-                        const newWorker = registration.installing;
-                        
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // 2. Aquí es donde eliminamos cualquier mensaje o pregunta
-                                console.log('✨ Versión lista. Aplicando automáticamente...');
-                                
-                                // Mandamos la orden directa de saltar la espera
-                                newWorker.postMessage({ type: 'SKIP_WAITING' });
+    const embed = {
+        title,
+        description: mensaje,
+        color,
+        timestamp: new Date().toISOString(),
+        footer: { text: 'Scraper Automático | Hora Chile' }
+    };
+
+    try {
+        await axios.post(webhookUrl, {
+            username: 'Biotrén Bot',
+            embeds: [embed]
+        });
+    } catch (error) {
+        console.error('Error al enviar notificación a Discord:', error.message);
+    }
+}
+
+async function iniciarScraper() {
+    console.log("🚀 Iniciando Scraper por Fases: Cruce Total de Líneas");
+    console.log(`🕐 Hora actual en Chile: ${obtenerFechaChile()}`);
+    console.log(`📁 Directorio de trabajo: ${__dirname}`);
+
+    try {
+        // 1. Cargar estaciones
+        if (!fs.existsSync(RUTA_ESTACIONES)) {
+            const errorMsg = `❌ Error: No se encuentra ${RUTA_ESTACIONES}`;
+            console.error(errorMsg);
+            await notificarDiscord(errorMsg, 'error');
+            return;
+        }
+
+        const estacionesData = JSON.parse(fs.readFileSync(RUTA_ESTACIONES, 'utf-8'));
+        const estaciones = [
+            ...estacionesData.lineas["Línea 1"],
+            ...estacionesData.lineas["Línea 2"]
+        ];
+        console.log(`📍 Cargadas ${estaciones.length} estaciones`);
+
+        // 2. Cargar feriados (EXCLUYENDO feriados bancarios)
+        let feriadosChile = [];
+        let feriadosInfo = [];
+        
+        if (fs.existsSync(RUTA_FERIADOS)) {
+            try {
+                const feriadosData = JSON.parse(fs.readFileSync(RUTA_FERIADOS, 'utf-8'));
+                
+                const feriadosReales = feriadosData.feriados.filter(f => f.tipo !== "bancario");
+                
+                feriadosChile = feriadosReales.map(f => f.fecha);
+                feriadosInfo = feriadosReales.map(f => ({
+                    fecha: f.fecha,
+                    nombre: f.nombre,
+                    dia: f.dia,
+                    irrenunciable: f.irrenunciable || false,
+                    tipo: f.tipo
+                }));
+                
+                console.log(`📅 Cargados ${feriadosChile.length} feriados reales (excluyendo bancarios)`);
+                
+                const excluidos = feriadosData.feriados.filter(f => f.tipo === "bancario");
+                if (excluidos.length > 0) {
+                    console.log(`ℹ️  Feriados bancarios excluidos (Biotrén SÍ opera):`);
+                    excluidos.forEach(f => console.log(`   - ${f.fecha}: ${f.nombre}`));
+                }
+                
+            } catch (e) {
+                console.warn('⚠️ No se pudieron cargar feriados');
+            }
+        }
+
+        // 3. Obtener fechas y validar si son feriados
+        const fechas = obtenerFechasSemanaActual(feriadosChile, feriadosInfo);
+        
+        // 4. Construir fases según disponibilidad
+        const fases = [];
+        const advertencias = [];
+        
+        // ⭐ CAMBIO PRINCIPAL: usar laboralRef en vez de verificar solo el viernes
+        if (fechas.laboralRef) {
+            const { fecha, dia, retrocesoDias } = fechas.laboralRef;
+
+            if (retrocesoDias === 0) {
+                // Viernes disponible — comportamiento normal
+                fases.push({ id: 'laboral', fecha });
+            } else {
+                // Viernes feriado → usando un día anterior como referencia
+                const feriadoViernes = feriadosInfo.find(f => f.fecha === fechas.viernes);
+                const nombreFeriado = feriadoViernes ? feriadoViernes.nombre : 'Feriado';
+                advertencias.push(
+                    `⚠️ VIERNES ${fechas.viernes} es ${nombreFeriado} — usando ${dia} ${fecha} como referencia de horario LABORAL`
+                );
+                fases.push({ id: 'laboral', fecha });
+            }
+        } else {
+            // Toda la semana laboral (lun-vie) son feriados
+            advertencias.push(`⚠️ Toda la semana laboral es feriado — no se scrapeará horario LABORAL`);
+        }
+        
+        if (!fechas.sabadoEsFeriado) {
+            fases.push({ id: 'sabado', fecha: fechas.sabado });
+        } else {
+            const feriadoInfo = feriadosInfo.find(f => f.fecha === fechas.sabado);
+            const nombreFeriado = feriadoInfo ? feriadoInfo.nombre : 'Feriado';
+            advertencias.push(`⚠️ SÁBADO ${fechas.sabado} es ${nombreFeriado} — se omite scraping de SÁBADO`);
+        }
+        
+        // Domingo siempre se scrapea (es festivo por definición)
+        fases.push({ id: 'festivo', fecha: fechas.domingo });
+
+        if (advertencias.length > 0) {
+            console.log('\n⚠️ ADVERTENCIAS:');
+            advertencias.forEach(adv => console.log(adv));
+            console.log('');
+        }
+
+        if (fases.length === 0) {
+            const mensajeError = '❌ CRÍTICO: No hay ningún día disponible para scrapear.';
+            console.error(mensajeError);
+            await notificarDiscord(mensajeError, 'error');
+            return;
+        }
+
+        console.log(`📅 Fechas a scrapear (${fases.length} días):`);
+        fases.forEach(f => console.log(`   ${f.id}: ${f.fecha}`));
+
+        // 5. Inicializar base de datos
+        // ⭐ Guardamos qué fecha se usó realmente como referencia laboral
+        const laboralUsado = fechas.laboralRef
+            ? { fecha: fechas.laboralRef.fecha, dia: fechas.laboralRef.dia }
+            : null;
+
+        let baseDeDatos = {
+            ultima_update: obtenerFechaChile(),
+            fechas_scrapeadas: {
+                viernes: fechas.viernes,
+                sabado: fechas.sabado,
+                domingo: fechas.domingo,
+                laboral_referencia: laboralUsado  // ej: { fecha: "2026-04-02", dia: "Jueves" }
+            },
+            feriados: feriadosChile,
+            feriados_info: feriadosInfo,
+            feriados_semana: fechas.feriadosEnSemana,
+            advertencias: advertencias,
+            rutas: {}
+        };
+
+        estaciones.forEach(o => {
+            estaciones.forEach(d => {
+                if (o.id !== d.id) {
+                    baseDeDatos.rutas[`${o.id}-${d.id}`] = { 
+                        laboral: [], 
+                        sabado: [], 
+                        festivo: [] 
+                    };
+                }
+            });
+        });
+
+        const totalRutasPorDia = estaciones.length * (estaciones.length - 1);
+        const progressBar = new cliProgress.SingleBar({
+            format: '🚂 {fase} | [{bar}] {percentage}% | {value}/{total} Rutas | {info}',
+        }, cliProgress.Presets.shades_classic);
+
+        let erroresEncontrados = 0;
+        let rutasCompletadas = 0;
+
+        // 6. Ejecución por días
+        for (const fase of fases) {
+            console.log(`\n--- TRABAJANDO DÍA: ${fase.id.toUpperCase()} (${fase.fecha}) ---`);
+            progressBar.start(totalRutasPorDia, 0);
+
+            for (let o of estaciones) {
+                for (let d of estaciones) {
+                    if (o.id === d.id) continue;
+
+                    progressBar.update(null, { 
+                        fase: fase.id.toUpperCase(), 
+                        info: `${o.nombre} -> ${d.nombre}` 
+                    });
+
+                    try {
+                        const res = await axios.get(`https://www.efe.cl/planificador/`, {
+                            params: { 
+                                empresa: 6, 
+                                origen: o.id, 
+                                destino: d.id, 
+                                salida: fase.fecha, 
+                                usuario: 1, 
+                                ida: 1 
+                            },
+                            headers: { 
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
+                                'Cache-Control': 'no-cache'
+                            },
+                            timeout: 12000
+                        });
+
+                        const $ = cheerio.load(res.data);
+                        let viajes = [];
+
+                        $('.tablaTren tbody tr').each((_, el) => {
+                            const tds = $(el).find('td');
+                            if (tds.length >= 4) {
+                                viajes.push({
+                                    s: $(tds[0]).text().trim(),
+                                    ll: $(tds[1]).text().trim(),
+                                    d: $(tds[2]).text().trim(),
+                                    v: $(tds[3]).text().replace(/[^0-9]/g, '')
+                                });
                             }
                         });
-                    });
-                })
-                .catch(error => {
-                    console.error('❌ Error al registrar Service Worker:', error);
-                });
-        });
-        
-        // 3. Este bloque es vital: cuando el nuevo SW toma el mando, recarga la app
-        let refreshing = false; // Evita bucles de recarga
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (!refreshing) {
-                console.log('🔄 App actualizada. Recargando para mostrar cambios...');
-                window.location.reload();
-                refreshing = true;
-            }
-        });
-    } else {
-        console.warn('⚠️ Service Workers no soportados');
-    }
-</script>
-</body>
 
-</html>
+                        baseDeDatos.rutas[`${o.id}-${d.id}`][fase.id] = viajes;
+                        rutasCompletadas++;
+
+                    } catch (e) {
+                        baseDeDatos.rutas[`${o.id}-${d.id}`][fase.id] = [];
+                        erroresEncontrados++;
+                    }
+
+                    fs.writeFileSync(RUTA_SALIDA, JSON.stringify(baseDeDatos, null, 2));
+                    await sleep(Math.random() * (DELAY_MAX - DELAY_MIN) + DELAY_MIN);
+                    progressBar.increment();
+                }
+            }
+            progressBar.stop();
+            console.log(`✅ Día ${fase.id} completado.`);
+        }
+
+        // Escribir version.json con solo ultima_update (~50 bytes)
+        // La app lo usa para evitar descargar los 4MB de horarios.json si la versión no cambió
+        const versionData = { ultima_update: baseDeDatos.ultima_update };
+        fs.writeFileSync(RUTA_VERSION, JSON.stringify(versionData));
+        console.log(`📋 version.json generado: ${baseDeDatos.ultima_update}`);
+
+        console.log("\n✨ ¡PROCESO FINALIZADO CON ÉXITO!");
+        console.log(`📁 Archivo generado en: ${RUTA_SALIDA}`);
+        
+        let estadoNotificacion;
+        if (erroresEncontrados > 100) {
+            estadoNotificacion = 'error';
+        } else if (advertencias.length > 0) {
+            estadoNotificacion = 'advertencia';
+        } else {
+            estadoNotificacion = 'exito';
+        }
+
+        // Descripción legible de qué fecha se usó para el horario laboral
+        let laboralDesc;
+        if (!fechas.laboralRef) {
+            laboralDesc = '❌ Toda la semana laboral es feriado (omitido)';
+        } else if (fechas.laboralRef.retrocesoDias === 0) {
+            laboralDesc = `✅ Scrapeado (${fechas.viernes})`;
+        } else {
+            laboralDesc = `⚠️ Viernes feriado → referencia: ${fechas.laboralRef.dia} ${fechas.laboralRef.fecha}`;
+        }
+
+        let mensajeExito = `
+**Scraping completado exitosamente** 🎉
+
+📅 **Fechas procesadas:**
+- Laboral: ${laboralDesc}
+- Sábado ${fechas.sabado}: ${fechas.sabadoEsFeriado ? '❌ FERIADO (omitido)' : '✅ Scrapeado'}
+- Domingo ${fechas.domingo}: ✅ Scrapeado
+
+📊 **Estadísticas:**
+- Días procesados: ${fases.length}/3
+- Rutas completadas: ${rutasCompletadas}
+- Errores: ${erroresEncontrados}
+- Estaciones: ${estaciones.length}
+- Feriados totales: ${feriadosChile.length}
+
+🕒 **Última actualización:** ${baseDeDatos.ultima_update}
+📍 **Zona horaria:** Santiago, Chile
+        `;
+
+        if (fechas.feriadosEnSemana && fechas.feriadosEnSemana.length > 0) {
+            mensajeExito += `\n\n🎊 **Feriados esta semana (${fechas.feriadosEnSemana.length}):**\n`;
+            fechas.feriadosEnSemana.forEach(f => {
+                mensajeExito += `- ${f.dia} ${f.fecha}: ${f.nombre}\n`;
+            });
+        }
+
+        if (advertencias.length > 0) {
+            mensajeExito += `\n\n⚠️ **Advertencias:**\n${advertencias.join('\n')}`;
+        }
+        
+        await notificarDiscord(mensajeExito, estadoNotificacion);
+
+    } catch (error) {
+        const errorMsg = `
+**Error crítico en el scraper** ⚠️
+
+❌ ${error.message}
+
+\`\`\`
+${error.stack}
+\`\`\`
+
+🕒 Hora del error: ${obtenerFechaChile()}
+        `;
+        console.error(error);
+        await notificarDiscord(errorMsg, 'error');
+        throw error;
+    }
+}
+
+iniciarScraper();
