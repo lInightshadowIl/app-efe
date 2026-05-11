@@ -1,5 +1,5 @@
 // Incrementa este número cada vez que hagas un deploy
-const CACHE_VERSION = 'biotren-v3.1.2';
+const CACHE_VERSION = 'biotren-v3.2.0'; // ping-connectivity + SW timeout fix
 
 // Solo cacheamos para poder funcionar OFFLINE — no para servir por defecto
 const ASSETS_OFFLINE = [
@@ -88,15 +88,22 @@ self.addEventListener('fetch', (event) => {
 // ESTRATEGIAS
 
 async function networkFirstConCache(request) {
+    // Timeout propio en el SW: 6s máximo.
+    // Evita que señal deficiente deje el fetch colgado indefinidamente.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 6000);
+
     try {
-        const respuesta = await fetch(request);
+        const respuesta = await fetch(request, { signal: controller.signal });
+        clearTimeout(timer);
         if (respuesta && respuesta.status === 200) {
             const cache = await caches.open(CACHE_VERSION);
             cache.put(request, respuesta.clone());
         }
         return respuesta;
     } catch {
-        console.log('[SW] Offline, usando cache para:', request.url);
+        clearTimeout(timer);
+        console.log('[SW] Red no disponible o timeout, usando cache para:', request.url);
         const cached = await caches.match(request);
         if (cached) return cached;
         if (request.mode === 'navigate') {
