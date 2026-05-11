@@ -13,6 +13,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 const RUTA_ESTACIONES = path.join(__dirname, 'estaciones.json');
 const RUTA_FERIADOS = path.join(__dirname, 'feriados.json');
 const RUTA_SALIDA = path.join(__dirname, '..', 'horarios.json');
+const RUTA_VERSION = path.join(__dirname, '..', 'version.json');
 
 function obtenerFechaChile() {
     return new Date().toLocaleString('es-CL', { 
@@ -375,6 +376,12 @@ async function iniciarScraper() {
             progressBar.stop();
             console.log(`✅ Día ${fase.id} completado.`);
         }
+
+        // Escribir version.json con solo ultima_update (~50 bytes)
+        // La app lo usa para evitar descargar los 4MB de horarios.json si la versión no cambió
+        const versionData = { ultima_update: baseDeDatos.ultima_update };
+        fs.writeFileSync(RUTA_VERSION, JSON.stringify(versionData));
+        console.log(`📋 version.json generado: ${baseDeDatos.ultima_update}`);
 
         console.log("\n✨ ¡PROCESO FINALIZADO CON ÉXITO!");
         console.log(`📁 Archivo generado en: ${RUTA_SALIDA}`);
