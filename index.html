@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -10,19 +11,51 @@
     <title>Biotren App - Horarios</title>
     <meta name="description" content="Consulta los horarios del Biotren offline.">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css">
-       <!-- Apple Touch Icons -->
-    <link rel="icon" href="icons/icon-32x32.png" type="image/png">
-    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144x144.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="icons/icon-120x120.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="icons/icon-114x114.png">
-    <link rel="apple-touch-icon" sizes="76x76" href="icons/icon-76x76.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="icons/icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="60x60" href="icons/icon-60x60.png">
-    <link rel="apple-touch-icon" sizes="57x57" href="icons/icon-57x57.png">
-    <link rel="apple-touch-icon" href="https://www.efe.cl/wp-content/themes/efe/assets/img/logo-efe.png">
+
+```
+<!-- Apple Touch Icons -->
+<link rel="icon" href="icons/icon-32x32.png" type="image/png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180x180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152x152.png">
+<link rel="apple-touch-icon" sizes="144x144" href="icons/icon-144x144.png">
+<link rel="apple-touch-icon" sizes="120x120" href="icons/icon-120x120.png">
+<link rel="apple-touch-icon" sizes="114x114" href="icons/icon-114x114.png">
+<link rel="apple-touch-icon" sizes="76x76" href="icons/icon-76x76.png">
+<link rel="apple-touch-icon" sizes="72x72" href="icons/icon-72x72.png">
+<link rel="apple-touch-icon" sizes="60x60" href="icons/icon-60x60.png">
+<link rel="apple-touch-icon" sizes="57x57" href="icons/icon-57x57.png">
+<link rel="apple-touch-icon" href="https://www.efe.cl/wp-content/themes/efe/assets/img/logo-efe.png">
+
+<!--
+    CSS CRÍTICO INLINE
+    Se aplica en el primer frame, antes de que el navegador descargue style.css.
+    Evita el flash negro/blanco al abrir la app con internet lento u offline.
+    Solo contiene lo mínimo: fondo, color de texto y una transición suave.
+    El resto del diseño sigue en style.css sin cambios.
+-->
+<style>
+    html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #0b0e14; /* igual a theme-color */
+        color: #e0e0e0;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        min-height: 100vh;
+    }
+    /* Evita el destello de contenido sin estilo en el primer render */
+    .app-container {
+        opacity: 0;
+        animation: fadeIn 0.2s ease forwards;
+    }
+    @keyframes fadeIn {
+        to { opacity: 1; }
+    }
+</style>
+
+<!-- style.css carga después — sobreescribe y amplía el CSS crítico -->
+<link rel="stylesheet" href="style.css">
+```
+
 </head>
 <body>
     <div class="app-container">
@@ -31,145 +64,197 @@
             <p id="fecha-actual"></p>
         </header>
 
-        <div id="aviso-feriado" class="hidden"></div>
-        <div id="aviso-feriados-semana" class="hidden"></div>
+```
+    <div id="aviso-feriado" class="hidden"></div>
+    <div id="aviso-feriados-semana" class="hidden"></div>
 
-        <!-- RUTAS FAVORITAS -->
-        <section class="favoritos-section" id="favoritos-section">
-            <div class="favoritos-header">
-                <div class="favoritos-titulo">
-                    ⭐ Mis Rutas <span class="fav-badge" id="fav-badge" style="display:none">0</span>
-                </div>
-                <button class="btn-nueva-ruta" id="btn-nueva-ruta">
-                    + Nueva ruta
-                </button>
+    <!-- RUTAS FAVORITAS -->
+    <section class="favoritos-section" id="favoritos-section">
+        <div class="favoritos-header">
+            <div class="favoritos-titulo">
+                ⭐ Mis Rutas <span class="fav-badge" id="fav-badge" style="display:none">0</span>
             </div>
-            <div class="favoritos-lista" id="favoritos-lista">
-                <div class="favoritos-vacio" id="favoritos-vacio">
-                    <span>⭐</span>
-                    Agrega rutas favoritas para consultar horarios con un solo toque.
-                </div>
+            <button class="btn-nueva-ruta" id="btn-nueva-ruta">
+                + Nueva ruta
+            </button>
+        </div>
+        <div class="favoritos-lista" id="favoritos-lista">
+            <div class="favoritos-vacio" id="favoritos-vacio">
+                <span>⭐</span>
+                Agrega rutas favoritas para consultar horarios con un solo toque.
             </div>
-        </section>
+        </div>
+    </section>
 
-        <div class="seccion-divisor">
-            <span>Búsqueda manual</span>
+    <div class="seccion-divisor">
+        <span>Búsqueda manual</span>
+    </div>
+
+    <section class="selector-group">
+        <label>¿Cuándo viajas?</label>
+        <select id="dia-select">
+            <option value="hoy">Hoy (Tiempo Real)</option>
+            <option value="laboral">Lunes a Viernes</option>
+            <option value="sabado">Sábado</option>
+            <option value="festivo">Domingo o Feriado</option>
+        </select>
+
+        <div class="estaciones-container">
+            <label>Origen:</label>
+            <select id="origen-select"></select>
+
+            <button id="btn-swap" type="button" class="swap-button">
+                🔄 Intercambiar Estaciones
+            </button>
+
+            <label>Destino:</label>
+            <select id="destino-select"></select>
         </div>
 
-        <section class="selector-group">
-            <label>¿Cuándo viajas?</label>
-            <select id="dia-select">
-                <option value="hoy">Hoy (Tiempo Real)</option>
-                <option value="laboral">Lunes a Viernes</option>
-                <option value="sabado">Sábado</option>
-                <option value="festivo">Domingo o Feriado</option>
-            </select>
+        <div class="filtro-tiempo">
+            <label class="switch">
+                <input type="checkbox" id="ver-todo">
+                <span class="slider"></span>
+            </label>
+            <span>Mostrar horarios pasados</span>
+        </div>
 
-            <div class="estaciones-container">
-                <label>Origen:</label>
-                <select id="origen-select"></select>
+        <button id="buscar-btn">Consultar Horarios</button>
+    </section>
 
-                <button id="btn-swap" type="button" class="swap-button">
-                    🔄 Intercambiar Estaciones
-                </button>
+    <section id="resultados-container">
+        <p class="no-data">Selecciona tu ruta para ver los próximos trenes.</p>
+    </section>
 
-                <label>Destino:</label>
-                <select id="destino-select"></select>
-            </div>
+    <footer class="app-footer">
+        <span>Horarios actualizados: <strong id="footer-ultima-update">—</strong></span>
+        <span id="conexion-dot" class="conexion-dot"></span>
+    </footer>
+</div>
 
-            <div class="filtro-tiempo">
-                <label class="switch">
-                    <input type="checkbox" id="ver-todo">
-                    <span class="slider"></span>
-                </label>
-                <span>Mostrar horarios pasados</span>
-            </div>
+<!-- Modal Crear / Editar Ruta Favorita -->
+<div class="modal-overlay" id="modal-favorito" data-modo="crear">
+    <div class="modal-box">
+        <div class="modal-titulo">⭐ <span id="modal-titulo-txt">Nueva Ruta Favorita</span></div>
 
-            <button id="buscar-btn">Consultar Horarios</button>
-        </section>
+        <div class="modal-campo">
+            <label>Nombre de la ruta</label>
+            <input type="text" id="fav-nombre" placeholder="Ej: Trabajo, Casa, Universidad…" maxlength="30">
+        </div>
+        <div class="modal-campo">
+            <label>Origen</label>
+            <select id="fav-origen"></select>
+        </div>
+        <div class="modal-campo">
+            <label>Destino</label>
+            <select id="fav-destino"></select>
+        </div>
 
-        <section id="resultados-container">
-            <p class="no-data">Selecciona tu ruta para ver los próximos trenes.</p>
-        </section>
-
-        <footer class="app-footer">
-            <span>Horarios actualizados: <strong id="footer-ultima-update">—</strong></span>
-            <span id="conexion-dot" class="conexion-dot"></span>
-        </footer>
+        <div class="modal-botones">
+            <button class="btn-modal-cancelar" id="btn-modal-cancelar">Cancelar</button>
+            <button class="btn-modal-guardar"  id="btn-modal-guardar">⭐ Guardar ruta</button>
+        </div>
     </div>
+</div>
+
+<script src="estaciones.js"></script>
+<script src="app.js"></script>
+
+<!--
+    REGISTRO DEL SERVICE WORKER
     
-    <!-- Modal Crear / Editar Ruta Favorita -->
-    <div class="modal-overlay" id="modal-favorito" data-modo="crear">
-        <div class="modal-box">
-            <div class="modal-titulo">⭐ <span id="modal-titulo-txt">Nueva Ruta Favorita</span></div>
-
-            <div class="modal-campo">
-                <label>Nombre de la ruta</label>
-                <input type="text" id="fav-nombre" placeholder="Ej: Trabajo, Casa, Universidad…" maxlength="30">
-            </div>
-            <div class="modal-campo">
-                <label>Origen</label>
-                <select id="fav-origen"></select>
-            </div>
-            <div class="modal-campo">
-                <label>Destino</label>
-                <select id="fav-destino"></select>
-            </div>
-
-            <div class="modal-botones">
-                <button class="btn-modal-cancelar" id="btn-modal-cancelar">Cancelar</button>
-                <button class="btn-modal-guardar"  id="btn-modal-guardar">⭐ Guardar ruta</button>
-            </div>
-        </div>
-    </div>
-
-
-    <script src="estaciones.js"></script>
-    <script src="app.js"></script>
-
-    <!-- Registro del Service Worker mejorado -->
+    Cambios respecto a la versión anterior:
+    
+    1. Se eliminó el bloque 'controllerchange' que forzaba window.location.reload()
+       automáticamente. Ese reload era la pantalla blanca: el SW nuevo tomaba control
+       y la app se recargaba sin avisar al usuario.
+    
+       Con la nueva estrategia staleWhileRevalidate en sw.js, el HTML/JS/CSS se
+       actualiza en background y la nueva versión queda lista para la PRÓXIMA visita.
+       No hace falta recargar en medio de la sesión del usuario.
+    
+    2. Cuando hay una versión nueva lista (newWorker.state === 'installed'), se muestra
+       un banner no intrusivo. El usuario decide cuándo recargar.
+    
+    3. La verificación periódica cada hora se mantiene igual.
+-->
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/service-worker.js')
                 .then(registration => {
-                    // 1. Mantenemos tu verificación cada hora
+
+                    // Verifica actualizaciones cada hora
                     setInterval(() => {
                         registration.update();
                     }, 60 * 60 * 1000);
-                    
+
                     registration.addEventListener('updatefound', () => {
                         const newWorker = registration.installing;
-                        
+
                         newWorker.addEventListener('statechange', () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // 2. Aquí es donde eliminamos cualquier mensaje o pregunta
-                                console.log('✨ Versión lista. Aplicando automáticamente...');
-                                
-                                // Mandamos la orden directa de saltar la espera
-                                newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                // Hay una versión nueva en caché, lista para la próxima visita.
+                                // Mostramos un banner suave — el usuario decide cuándo recargar.
+                                console.log('✨ Nueva versión disponible en background.');
+                                mostrarBannerActualizacion();
                             }
                         });
                     });
+
                 })
                 .catch(error => {
                     console.error('❌ Error al registrar Service Worker:', error);
                 });
         });
-        
-        // 3. Este bloque es vital: cuando el nuevo SW toma el mando, recarga la app
-        let refreshing = false; // Evita bucles de recarga
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (!refreshing) {
-                console.log('🔄 App actualizada. Recargando para mostrar cambios...');
-                window.location.reload();
-                refreshing = true;
-            }
-        });
+
     } else {
         console.warn('⚠️ Service Workers no soportados');
     }
-</script>
-</body>
 
+    // Banner no intrusivo — aparece abajo, el usuario decide cuándo recargar
+    function mostrarBannerActualizacion() {
+        // Evita duplicados si se llama más de una vez
+        if (document.getElementById('banner-update')) return;
+
+        const banner = document.createElement('div');
+        banner.id = 'banner-update';
+        banner.style.cssText = `
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1a2236;
+            color: #e0e0e0;
+            border-top: 1px solid #2a3a5c;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 14px;
+            z-index: 9999;
+            box-shadow: 0 -2px 12px rgba(0,0,0,0.4);
+        `;
+        banner.innerHTML = `
+            <span>🚉 Hay una nueva versión disponible</span>
+            <div style="display:flex;gap:8px">
+                <button onclick="this.closest('#banner-update').remove()"
+                        style="background:transparent;border:1px solid #4a6a9c;color:#9ab;
+                               padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px">
+                    Ahora no
+                </button>
+                <button onclick="window.location.reload()"
+                        style="background:#2a5caa;border:none;color:#fff;
+                               padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">
+                    Actualizar
+                </button>
+            </div>
+        `;
+        document.body.appendChild(banner);
+    }
+</script>
+```
+
+</body>
 </html>
