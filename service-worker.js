@@ -1,5 +1,5 @@
 // Incrementa este número cada vez que hagas un deploy
-const CACHE_VERSION = 'biotren-v3.2.0'; // ping-connectivity + SW timeout fix
+const CACHE_VERSION = 'biotren-v3.3.0'; // version.json two-step update check
 
 // Solo cacheamos para poder funcionar OFFLINE — no para servir por defecto
 const ASSETS_OFFLINE = [
@@ -8,6 +8,7 @@ const ASSETS_OFFLINE = [
     '/style.css',
     '/app.js',
     '/estaciones.js',
+    '/version.json',
     '/horarios.json',
     '/manifest.json',
     '/icons/icon-32x32.png',
@@ -63,8 +64,8 @@ self.addEventListener('fetch', (event) => {
     // Ignorar solicitudes a otros dominios
     if (url.origin !== location.origin) return;
 
-    // horarios.json: Network First (datos criticos, siempre frescos)
-    if (url.pathname.includes('horarios.json')) {
+    // version.json y horarios.json: Network First (datos críticos, siempre frescos)
+    if (url.pathname.includes('version.json') || url.pathname.includes('horarios.json')) {
         event.respondWith(networkFirstConCache(event.request));
         return;
     }
