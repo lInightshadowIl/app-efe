@@ -8,6 +8,14 @@ function getFechaLocal(fecha = new Date()) {
 
 let baseDatos = null;
 
+// Tipo de usuario: 'general' o 'estudiante', persistido en localStorage
+function getTipoUsuario() {
+    return localStorage.getItem('tipoUsuario') || 'general';
+}
+function setTipoUsuario(tipo) {
+    localStorage.setItem('tipoUsuario', tipo);
+}
+
 // ============================================================
 // SISTEMA DE DETECCIÓN DE CONECTIVIDAD REAL
 // navigator.onLine miente con señal deficiente → usamos ping
@@ -292,7 +300,9 @@ async function inicializarApp() {
                 viajesFiltrados = viajes.filter(t => t.s >= horaActualStr);
             }
 
-            renderizarHorarios(viajesFiltrados, horaActualStr, diaElegido === "hoy");
+            const rutaData = baseDatos.rutas[`${origen}-${destino}`];
+            const precio = getPrecioRuta(rutaData);
+            renderizarHorarios(viajesFiltrados, horaActualStr, diaElegido === "hoy", precio);
         }
 
         function limpiarResultados() {
@@ -319,6 +329,7 @@ async function inicializarApp() {
         checkVerTodo.addEventListener('change', realizarBusqueda);
 
         cargarEstaciones();
+        inicializarSwitchUsuario();
         verificarFeriado();
         mostrarFecha();
         mostrarUltimaActualizacion();
@@ -333,14 +344,25 @@ async function inicializarApp() {
     }
 }
 
-function renderizarHorarios(trenes, horaActual, esHoy) {
+function renderizarHorarios(trenes, horaActual, esHoy, precioRuta = null) {
     const contenedor = document.getElementById('resultados-container');
     if (trenes.length === 0) {
         contenedor.innerHTML = "<p class='no-data'>No hay trenes disponibles para esta ruta.</p>";
         return;
     }
 
-    contenedor.innerHTML = trenes.map(t => `
+    contenedor.innerHTML = trenes.map(t => {
+        let precioHtml;
+        if (precioRuta) {
+            if (precioRuta.pendiente) {
+                precioHtml = `<span class="precio-pendiente" title="Precio estudiante aún no disponible">💰 $${precioRuta.valor} <span class="precio-tag">precio no actualizado</span></span>`;
+            } else {
+                precioHtml = `<span>💰 $${precioRuta.valor}</span>`;
+            }
+        } else {
+            precioHtml = `<span>💰 $${t.v}</span>`;
+        }
+        return `
         <div class="tarjeta-tren ${(esHoy && t.s < horaActual) ? 'pasado' : ''}">
             <div class="hora-principal">
                 <div class="bloque-hora">
@@ -354,10 +376,49 @@ function renderizarHorarios(trenes, horaActual, esHoy) {
                 </div>
             </div>
             <div class="info-extra">
-                <span>⏱️ ${t.d}</span> | <span>💰 $${t.v}</span>
+                <span>⏱️ ${t.d}</span> | ${precioHtml}
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
+}
+
+function inicializarSwitchUsuario() {
+    const switchEl = document.getElementById('switch-usuario');
+    if (!switchEl) return;
+
+    const opts = document.querySelectorAll('.switch-usuario-opt');
+    const [optGeneral, optEstudiante] = opts;
+
+    function actualizarTexto() {
+        const esEstudiante = switchEl.checked;
+        if (optGeneral)   optGeneral.style.fontWeight   = esEstudiante ? '400' : '700';
+        if (optGeneral)   optGeneral.style.color        = esEstudiante ? '' : 'var(--azul-efe, #4f8ef7)';
+        if (optEstudiante) optEstudiante.style.fontWeight = esEstudiante ? '700' : '400';
+        if (optEstudiante) optEstudiante.style.color     = esEstudiante ? 'var(--azul-efe, #4f8ef7)' : '';
+    }
+
+    switchEl.checked = getTipoUsuario() === 'estudiante';
+    actualizarTexto();
+
+    switchEl.addEventListener('change', () => {
+        setTipoUsuario(switchEl.checked ? 'estudiante' : 'general');
+        actualizarTexto();
+    });
+}
+
+function getPrecioRuta(ruta) {
+    const tipo = getTipoUsuario();
+    const precios = ruta?.precios;
+
+    // Datos viejos (antes de implementar precios por separado): usar t.v como antes
+    if (!precios) return { valor: null, pendiente: false };
+
+    if (tipo === 'estudiante') {
+        if (precios.estudiante) return { valor: precios.estudiante, pendiente: false };
+        // Aún no hay precio estudiante (worker no ejecutado todavía)
+        return { valor: precios.general, pendiente: true };
+    }
+    return { valor: precios.general || null, pendiente: false };
 }
 
 function verificarFeriado() {
@@ -680,6 +741,8 @@ async function consultarFavorito(idx, btnEl) {
 
     // ⭐ CAMBIO: Mostrar TODOS los próximos trenes en lugar de solo 4
     const aRenderizar = proximos;
+    const rutaFavData = baseDatos.rutas[`${fav.origen}-${fav.destino}`];
+    const precioRutaFav = getPrecioRuta(rutaFavData);
 
     resContainer.innerHTML = `
         <div class="fav-trenes">
@@ -692,7 +755,10 @@ async function consultarFavorito(idx, btnEl) {
                     </div>
                     <div class="fav-meta">
                         <span>⏱ ${t.d}</span>
-                        <span>💰 $${t.v}</span>
+                        ${precioRutaFav?.pendiente
+                            ? `<span class="precio-pendiente" title="Precio estudiante aún no disponible">💰 $${precioRutaFav.valor} <span class="precio-tag">precio no actualizado</span></span>`
+                            : `<span>💰 $${precioRutaFav?.valor || t.v}</span>`
+                        }
                     </div>
                 </div>
             `).join('')}
