@@ -51,16 +51,15 @@ function actualizarIndicadorConexion(estado) {
 }
 
 /**
- * Carga horarios.json con timeout estricto, SIN pasar por el SW.
- * Esto evita el cuelgue cuando hay señal deficiente y el SW queda esperando.
+ * Fetch genérico con timeout estricto y cache: no-store (evita cuelgue en el SW).
  */
-async function fetchHorariosConTimeout(timeoutMs = 3000) {
+async function fetchConTimeout(url, timeoutMs = 3000) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-        const resp = await fetch(`horarios.json?v=${Date.now()}`, {
+        const resp = await fetch(`${url}?v=${Date.now()}`, {
             signal: controller.signal,
-            cache: 'no-store' // Evita que el SW lo intercepte y quede colgado
+            cache: 'no-store'
         });
         clearTimeout(timer);
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
@@ -99,27 +98,32 @@ async function cargarDatos() {
         return; // Usar datos locales, no intentar fetch
     }
 
-    // ── PASO 3: Hay internet real → actualizar indicador y sincronizar ──
+    // ── PASO 3: Hay internet real → verificar versión antes de descargar 4MB ──
     _hayInternet = true;
-    actualizarIndicadorConexion('online'); // El ping ya confirmó internet → puntito verde
+    actualizarIndicadorConexion('online');
     try {
-        const dataNueva = await fetchHorariosConTimeout(3000);
+        // Primero descarga version.json (~50 bytes) para comparar
+        const { ultima_update: ultimaServidor } = await fetchConTimeout('version.json', 3000);
         const ultimaLocal = localStorage.getItem('ultima_update');
-        const ultimaServidor = dataNueva.ultima_update;
 
-        if (ultimaServidor !== ultimaLocal) {
-            baseDatos = dataNueva;
-            localStorage.setItem('baseDatos', JSON.stringify(dataNueva));
-            localStorage.setItem('ultima_update', ultimaServidor);
-            console.log("✅ Horarios actualizados desde el servidor");
-        } else {
+        if (ultimaServidor === ultimaLocal) {
             console.log("✅ Horarios en caché vigentes");
+            return; // Sin cambios — no descarga los 4MB
         }
+
+        // Versión nueva → ahora sí descargar horarios.json completo
+        console.log("🔄 Nueva versión detectada, descargando horarios...");
+        const dataNueva = await fetchConTimeout('horarios.json', 10000); // más tiempo para 4MB
+        baseDatos = dataNueva;
+        localStorage.setItem('baseDatos', JSON.stringify(dataNueva));
+        localStorage.setItem('ultima_update', ultimaServidor);
+        console.log("✅ Horarios actualizados desde el servidor");
+
     } catch (error) {
         const esTimeout = error.name === 'AbortError';
         console.warn(esTimeout
-            ? "⚠️ Timeout al descargar horarios. Usando datos locales..."
-            : "⚠️ Error de red al descargar horarios. Usando datos locales..."
+            ? "⚠️ Timeout al verificar versión. Usando datos locales..."
+            : "⚠️ Error de red. Usando datos locales..."
         );
         if (!baseDatos) {
             contenedor.innerHTML = "<p class='no-data'>Primera vez: necesitas internet para descargar los horarios.</p>";
