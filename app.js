@@ -115,7 +115,6 @@ async function cargarDatos() {
         } else {
             console.log("✅ Horarios en caché vigentes");
         }
-        mostrarUltimaActualizacion(); // Refrescar fecha en footer si cambió
     } catch (error) {
         const esTimeout = error.name === 'AbortError';
         console.warn(esTimeout
