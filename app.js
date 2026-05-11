@@ -46,14 +46,8 @@ async function verificarConectividadReal(timeoutMs = 2000) {
 function actualizarIndicadorConexion(estado) {
     const dot = document.getElementById('conexion-dot');
     if (!dot) return;
-
-    if (estado === 'offline') {
-        dot.style.background = '#ef4444';
-        _hayInternet = false;
-    } else if (estado === 'online') {
-        dot.style.background = '#22c55e';
-        _hayInternet = true;
-    }
+    dot.style.background = estado === 'online' ? '#22c55e' : '#ef4444';
+    _hayInternet = estado === 'online';
 }
 
 /**
@@ -105,9 +99,9 @@ async function cargarDatos() {
         return; // Usar datos locales, no intentar fetch
     }
 
-    // ── PASO 3: Hay internet real → intentar actualizar horarios ──
-    _hayInternet = true; // Marcar antes de intentar fetch para evitar re-trigger del monitor
-    actualizarIndicadorConexion('verificando');
+    // ── PASO 3: Hay internet real → actualizar indicador y sincronizar ──
+    _hayInternet = true;
+    actualizarIndicadorConexion('online'); // El ping ya confirmó internet → puntito verde
     try {
         const dataNueva = await fetchHorariosConTimeout(3000);
         const ultimaLocal = localStorage.getItem('ultima_update');
@@ -121,13 +115,13 @@ async function cargarDatos() {
         } else {
             console.log("✅ Horarios en caché vigentes");
         }
+        mostrarUltimaActualizacion(); // Refrescar fecha en footer si cambió
     } catch (error) {
         const esTimeout = error.name === 'AbortError';
         console.warn(esTimeout
             ? "⚠️ Timeout al descargar horarios. Usando datos locales..."
             : "⚠️ Error de red al descargar horarios. Usando datos locales..."
         );
-        // No relanzar: si hay datos locales la app funciona igual
         if (!baseDatos) {
             contenedor.innerHTML = "<p class='no-data'>Primera vez: necesitas internet para descargar los horarios.</p>";
             throw error;
