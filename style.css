@@ -979,3 +979,36 @@ body {
     font-size: 0.7rem;
     font-weight: 700;
 }
+
+/* ── Footer ── */
+.app-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px 20px;
+    font-size: 0.72rem;
+    color: var(--texto-secundario);
+    border-top: 1px solid var(--borde);
+    margin-top: 8px;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.conexion-estado {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.conexion-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #6b7280; /* gris mientras carga */
+    flex-shrink: 0;
+    transition: background 0.4s ease;
+}
+
+.conexion-label {
+    color: var(--texto-secundario);
+}
