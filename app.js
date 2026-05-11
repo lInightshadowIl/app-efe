@@ -25,7 +25,7 @@ async function verificarConectividadReal(timeoutMs = 2000) {
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
         // Usamos no-cors para evitar errores CORS; solo nos importa que llegue la respuesta
-        await fetch('https://1.1.1.1/favicon.ico?_=' + Date.now(), {
+        await fetch('https://www.gstatic.com/generate_204?_=' + Date.now(), {
             method: 'HEAD',
             mode: 'no-cors',
             cache: 'no-store',
@@ -45,16 +45,13 @@ async function verificarConectividadReal(timeoutMs = 2000) {
  */
 function actualizarIndicadorConexion(estado) {
     const dot = document.getElementById('conexion-dot');
-    const label = document.getElementById('conexion-label');
-    if (!dot || !label) return;
+    if (!dot) return;
 
     if (estado === 'offline') {
         dot.style.background = '#ef4444';
-        label.textContent = 'Sin internet';
         _hayInternet = false;
     } else if (estado === 'online') {
         dot.style.background = '#22c55e';
-        label.textContent = 'Con internet';
         _hayInternet = true;
     }
 }
