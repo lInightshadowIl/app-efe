@@ -353,10 +353,14 @@ function renderizarHorarios(trenes, horaActual, esHoy, precioRuta = null) {
 
     contenedor.innerHTML = trenes.map(t => {
         let precioHtml;
-        const valorMostrar = precioRuta?.valor || t.v; // fallback a t.v si no hay precios nuevos
-        if (precioRuta?.pendiente) {
-            precioHtml = `<span class="precio-pendiente" title="Precio estudiante aún no disponible">💰 $${valorMostrar} <span class="precio-tag">precio no actualizado</span></span>`;
+        const tipo = getTipoUsuario();
+        const sinPrecioEstudiante = tipo === 'estudiante' && (!precioRuta?.valor || precioRuta?.pendiente);
+
+        if (sinPrecioEstudiante) {
+            // Precio estudiante aún no scrapeado → mostrar pendiente con reloj
+            precioHtml = `<span class="precio-pendiente" title="Precio estudiante pendiente de actualización">🕐 <span class="precio-tag">pendiente</span></span>`;
         } else {
+            const valorMostrar = precioRuta?.valor || t.v;
             precioHtml = `<span>💰 $${valorMostrar}</span>`;
         }
         return `
@@ -752,8 +756,8 @@ async function consultarFavorito(idx, btnEl) {
                     </div>
                     <div class="fav-meta">
                         <span>⏱ ${t.d}</span>
-                        ${precioRutaFav?.pendiente
-                            ? `<span class="precio-pendiente" title="Precio estudiante aún no disponible">💰 $${precioRutaFav.valor} <span class="precio-tag">precio no actualizado</span></span>`
+                        ${(getTipoUsuario() === 'estudiante' && (!precioRutaFav?.valor || precioRutaFav?.pendiente))
+                            ? `<span class="precio-pendiente" title="Precio estudiante pendiente de actualización">🕐 <span class="precio-tag">pendiente</span></span>`
                             : `<span>💰 $${precioRutaFav?.valor || t.v}</span>`
                         }
                     </div>
