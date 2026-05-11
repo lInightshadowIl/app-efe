@@ -18,10 +18,10 @@ jobs:
         run: |
           FECHA_CHILE=$(TZ='America/Santiago' date +'%Y-%m-%d')
           HORA_CHILE=$(TZ='America/Santiago' date +'%H:%M:%S')
-
-          # El workflow tarda ~35 minutos aprox, estimamos fin
-          HORA_FIN_ESTIMADA=$(TZ='America/Santiago' date -d "+35 minutes" +'%H:%M:%S')
           TIMESTAMP_ISO=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          # Guardar timestamp Unix para calcular duración real al final
+          echo "INICIO_TS=$(date +%s)" >> $GITHUB_ENV
 
           curl -s -o /dev/null -H "Content-Type: application/json" \
             -d "{
@@ -39,11 +39,6 @@ jobs:
                   {
                     \"name\": \"🕐 Hora de inicio\",
                     \"value\": \"$HORA_CHILE (Santiago)\",
-                    \"inline\": true
-                  },
-                  {
-                    \"name\": \"⏳ Finalización estimada\",
-                    \"value\": \"~$HORA_FIN_ESTIMADA (Santiago)\",
                     \"inline\": true
                   },
                   {
@@ -110,14 +105,55 @@ jobs:
           git pull --rebase origin main || git pull --rebase origin master || true
           git stash pop || true
 
-          git add horarios.json
+          git add horarios.json version.json
           if git diff --staged --quiet; then
-            echo "Sin cambios en horarios.json"
+            echo "Sin cambios en horarios.json ni version.json"
           else
             git commit -m "🤖 Actualización automática horarios - $(TZ='America/Santiago' date +'%Y-%m-%d %H:%M:%S')"
             git push
           fi
       
+      - name: 🎉 Notificar éxito del workflow
+        if: success()
+        run: |
+          FIN_TS=$(date +%s)
+          DURACION_SEG=$(( FIN_TS - INICIO_TS ))
+          DURACION_MIN=$(( DURACION_SEG / 60 ))
+          DURACION_SEG_RESTO=$(( DURACION_SEG % 60 ))
+          HORA_FIN=$(TZ='America/Santiago' date +'%H:%M:%S')
+          TIMESTAMP_ISO=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          curl -s -o /dev/null -H "Content-Type: application/json" \
+            -d "{
+              \"username\": \"Biotrén Bot\",
+              \"embeds\": [{
+                \"title\": \"✅ Scraper completado exitosamente\",
+                \"color\": 3066993,
+                \"fields\": [
+                  {
+                    \"name\": \"🕐 Hora de término\",
+                    \"value\": \"$HORA_FIN (Santiago)\",
+                    \"inline\": true
+                  },
+                  {
+                    \"name\": \"⏱️ Duración real\",
+                    \"value\": \"${DURACION_MIN}m ${DURACION_SEG_RESTO}s\",
+                    \"inline\": true
+                  },
+                  {
+                    \"name\": \"🔗 Ver ejecución\",
+                    \"value\": \"[Abrir en GitHub](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})\",
+                    \"inline\": false
+                  }
+                ],
+                \"footer\": {
+                  \"text\": \"GitHub Actions • Scraper Semanal\"
+                },
+                \"timestamp\": \"$TIMESTAMP_ISO\"
+              }]
+            }" \
+            ${{ secrets.DISCORD_WEBHOOK_URL }}
+
       - name: 📢 Notificar fallo de workflow
         if: failure()
         run: |
