@@ -1001,3 +1001,58 @@ body {
     flex-shrink: 0;
     transition: background 0.4s ease;
 }
+
+
+/* ── Switch tipo de pasajero ── */
+.switch-usuario-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: var(--superficie);
+    border-radius: 12px;
+    margin: 0 0 12px 0;
+}
+
+.switch-usuario-label {
+    font-size: 0.8rem;
+    color: var(--texto-secundario);
+    font-weight: 600;
+}
+
+.switch-usuario-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.switch-usuario-opt {
+    font-size: 0.8rem;
+    color: var(--texto-secundario);
+    transition: color 0.2s;
+}
+
+#switch-usuario:not(:checked) ~ .switch-usuario-opt:first-of-type,
+.switch-usuario-toggle:has(#switch-usuario:not(:checked)) .switch-usuario-opt:first-child {
+    color: var(--texto-principal, #fff);
+    font-weight: 600;
+}
+
+/* ── Precio pendiente (tarifa estudiante aún no scrapeada) ── */
+.precio-pendiente {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.precio-tag {
+    font-size: 0.65rem;
+    font-weight: 600;
+    background: #78350f;
+    color: #fcd34d;
+    padding: 1px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
