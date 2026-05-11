@@ -106,6 +106,7 @@ async function cargarDatos() {
     }
 
     // ── PASO 3: Hay internet real → intentar actualizar horarios ──
+    _hayInternet = true; // Marcar antes de intentar fetch para evitar re-trigger del monitor
     actualizarIndicadorConexion('verificando');
     try {
         const dataNueva = await fetchHorariosConTimeout(3000);
@@ -151,7 +152,7 @@ function iniciarMonitoreoConexion() {
         _hayInternet = ahora;
     }
 
-    // Chequeo inmediato al cargar y luego cada 30s
+    // Solo intervalo — el estado inicial lo establece cargarDatos() al arrancar
     setInterval(chequear, 30000);
 
     // Aprovechar los eventos del navegador como disparador adicional (no como fuente principal)
