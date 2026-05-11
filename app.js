@@ -8,25 +8,110 @@ function getFechaLocal(fecha = new Date()) {
 
 let baseDatos = null;
 
-async function cargarDatos() {
-    const contenedor = document.getElementById('resultados-container');
-    const localStored = localStorage.getItem('baseDatos');
+// ============================================================
+// SISTEMA DE DETECCIÓN DE CONECTIVIDAD REAL
+// navigator.onLine miente con señal deficiente → usamos ping
+// ============================================================
 
-    // Si hay datos locales, usarlos de inmediato mientras se intenta actualizar en segundo plano
-    if (localStored) {
-        baseDatos = JSON.parse(localStored);
-    }
+let _hayInternet = false; // Estado interno; arranca como offline hasta verificar
 
+/**
+ * Ping real: intenta descargar el favicon de Cloudflare (1.1.1.1).
+ * Es de 200 bytes aprox., responde en ~100ms con buena señal.
+ * Si falla o tarda más de 2s → sin internet.
+ */
+async function verificarConectividadReal(timeoutMs = 2000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s máximo
-
-        const respuestaSrv = await fetch(`horarios.json?v=${Date.now()}`, {
+        // Usamos no-cors para evitar errores CORS; solo nos importa que llegue la respuesta
+        await fetch('https://1.1.1.1/favicon.ico?_=' + Date.now(), {
+            method: 'HEAD',
+            mode: 'no-cors',
+            cache: 'no-store',
             signal: controller.signal
         });
-        clearTimeout(timeoutId);
+        clearTimeout(timer);
+        return true;
+    } catch {
+        clearTimeout(timer);
+        return false;
+    }
+}
 
-        const dataNueva = await respuestaSrv.json();
+/**
+ * Actualiza el indicador de conexión: un pequeño círculo en el footer.
+ * Verde = con internet, Rojo = sin internet.
+ */
+function actualizarIndicadorConexion(estado) {
+    const dot = document.getElementById('conexion-dot');
+    const label = document.getElementById('conexion-label');
+    if (!dot || !label) return;
+
+    if (estado === 'offline') {
+        dot.style.background = '#ef4444';
+        label.textContent = 'Sin internet';
+        _hayInternet = false;
+    } else if (estado === 'online') {
+        dot.style.background = '#22c55e';
+        label.textContent = 'Con internet';
+        _hayInternet = true;
+    }
+}
+
+/**
+ * Carga horarios.json con timeout estricto, SIN pasar por el SW.
+ * Esto evita el cuelgue cuando hay señal deficiente y el SW queda esperando.
+ */
+async function fetchHorariosConTimeout(timeoutMs = 3000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const resp = await fetch(`horarios.json?v=${Date.now()}`, {
+            signal: controller.signal,
+            cache: 'no-store' // Evita que el SW lo intercepte y quede colgado
+        });
+        clearTimeout(timer);
+        if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        return await resp.json();
+    } catch (err) {
+        clearTimeout(timer);
+        throw err;
+    }
+}
+
+async function cargarDatos() {
+    const contenedor = document.getElementById('resultados-container');
+
+    // ── PASO 1: Cargar datos locales INMEDIATAMENTE (arranque offline-first) ──
+    const localStored = localStorage.getItem('baseDatos');
+    if (localStored) {
+        try {
+            baseDatos = JSON.parse(localStored);
+            console.log("💾 Datos locales cargados — app lista offline");
+        } catch {
+            localStorage.removeItem('baseDatos');
+        }
+    }
+
+    // ── PASO 2: Verificar conectividad real con ping ──
+    const tieneInternet = await verificarConectividadReal(2000);
+
+    if (!tieneInternet) {
+        console.warn("📵 Sin internet detectado por ping");
+        actualizarIndicadorConexion('offline');
+
+        if (!baseDatos) {
+            contenedor.innerHTML = "<p class='no-data'>Primera vez: necesitas internet para descargar los horarios.</p>";
+            throw new Error("Sin internet y sin datos locales");
+        }
+        return; // Usar datos locales, no intentar fetch
+    }
+
+    // ── PASO 3: Hay internet real → intentar actualizar horarios ──
+    actualizarIndicadorConexion('verificando');
+    try {
+        const dataNueva = await fetchHorariosConTimeout(3000);
         const ultimaLocal = localStorage.getItem('ultima_update');
         const ultimaServidor = dataNueva.ultima_update;
 
@@ -38,20 +123,43 @@ async function cargarDatos() {
         } else {
             console.log("✅ Horarios en caché vigentes");
         }
-
     } catch (error) {
         const esTimeout = error.name === 'AbortError';
         console.warn(esTimeout
-            ? "⚠️ Tiempo de espera agotado. Usando datos locales..."
-            : "⚠️ Sin conexión. Usando datos locales..."
+            ? "⚠️ Timeout al descargar horarios. Usando datos locales..."
+            : "⚠️ Error de red al descargar horarios. Usando datos locales..."
         );
-
+        // No relanzar: si hay datos locales la app funciona igual
         if (!baseDatos) {
-            // Solo falla si tampoco había datos locales (primera vez sin internet)
-            contenedor.innerHTML = "<p class='no-data'>Primera vez: Necesitas internet para descargar horarios.</p>";
+            contenedor.innerHTML = "<p class='no-data'>Primera vez: necesitas internet para descargar los horarios.</p>";
             throw error;
         }
     }
+}
+
+// ── Monitoreo continuo de conexión (sondeo cada 30s) ──
+function iniciarMonitoreoConexion() {
+    async function chequear() {
+        const antes = _hayInternet;
+        const ahora = await verificarConectividadReal(2000);
+
+        if (!antes && ahora) {
+            // Recuperó internet → sincronizar en background
+            console.log('🌐 Conexión recuperada, sincronizando...');
+            actualizarIndicadorConexion('online');
+            cargarDatos().catch(() => {});
+        } else if (antes && !ahora) {
+            actualizarIndicadorConexion('offline');
+        }
+        _hayInternet = ahora;
+    }
+
+    // Chequeo inmediato al cargar y luego cada 30s
+    setInterval(chequear, 30000);
+
+    // Aprovechar los eventos del navegador como disparador adicional (no como fuente principal)
+    window.addEventListener('online',  () => chequear());
+    window.addEventListener('offline', () => actualizarIndicadorConexion('offline'));
 }
 
 async function inicializarApp() {
@@ -220,6 +328,7 @@ async function inicializarApp() {
         mostrarFecha();
         mostrarUltimaActualizacion();
         inicializarFavoritos();
+        iniciarMonitoreoConexion();
         
 
     } catch (error) {
@@ -310,7 +419,12 @@ function mostrarFecha() {
 function mostrarUltimaActualizacion() {
     if (baseDatos && baseDatos.ultima_update) {
         console.log(`📅 Última actualización: ${baseDatos.ultima_update}`);
-        
+
+        // Mostrar solo la fecha (antes del primer espacio o coma) en el footer
+        const soloFecha = baseDatos.ultima_update.split(',')[0].trim();
+        const el = document.getElementById('footer-ultima-update');
+        if (el) el.textContent = soloFecha;
+
         if (baseDatos.advertencias && baseDatos.advertencias.length > 0) {
             console.warn("⚠️ Advertencias:");
             baseDatos.advertencias.forEach(adv => console.warn("  -", adv));
@@ -334,26 +448,7 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// ⭐ Detectar cambios de conexión (solo logs)
-window.addEventListener('online', () => {
-    console.log('🌐 Conexión restaurada');
-    
-    // Sincronizar automáticamente
-    if ('serviceWorker' in navigator && 'sync' in ServiceWorkerRegistration.prototype) {
-        navigator.serviceWorker.ready.then((registration) => {
-            return registration.sync.register('sync-horarios');
-        }).then(() => {
-            console.log('🔄 Sincronización en segundo plano registrada');
-        }).catch((error) => {
-            console.warn('⚠️ No se pudo registrar sync:', error);
-            // Fallback: cargar manualmente
-            cargarDatos();
-        });
-    } else {
-        console.log('ℹ️ Background Sync no soportado, cargando manualmente');
-        cargarDatos();
-    }
-});
+
 
 
 
