@@ -297,7 +297,8 @@ async function iniciarScraper() {
         estaciones.forEach(o => {
             estaciones.forEach(d => {
                 if (o.id !== d.id) {
-                    baseDeDatos.rutas[`${o.id}-${d.id}`] = { 
+                    baseDeDatos.rutas[`${o.id}-${d.id}`] = {
+                        precios: { general: null, estudiante: null },
                         laboral: [], 
                         sabado: [], 
                         festivo: [] 
@@ -359,6 +360,33 @@ async function iniciarScraper() {
                                 });
                             }
                         });
+
+                        // Guardar precio general desde el primer viaje
+                        if (viajes.length > 0) {
+                            baseDeDatos.rutas[`${o.id}-${d.id}`].precios.general = viajes[0].v;
+                        }
+
+                        // Scrapear precio estudiante solo UNA vez por ruta (primer día que tenga viajes)
+                        if (viajes.length > 0 && baseDeDatos.rutas[`${o.id}-${d.id}`].precios.estudiante === null) {
+                            try {
+                                const resEst = await axios.get(`https://www.efe.cl/planificador/`, {
+                                    params: { empresa: 6, origen: o.id, destino: d.id, salida: fase.fecha, usuario: 2, ida: 1 },
+                                    headers: {
+                                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0',
+                                        'Cache-Control': 'no-cache'
+                                    },
+                                    timeout: 12000
+                                });
+                                const $est = cheerio.load(resEst.data);
+                                const tdsEst = $est('.tablaTren tbody tr').first().find('td');
+                                if (tdsEst.length >= 4) {
+                                    baseDeDatos.rutas[`${o.id}-${d.id}`].precios.estudiante = $est(tdsEst[3]).text().replace(/[^0-9]/g, '');
+                                }
+                            } catch {
+                                // Si falla queda null — la app mostrará "pendiente"
+                            }
+                            await sleep(Math.random() * (DELAY_MAX - DELAY_MIN) + DELAY_MIN);
+                        }
 
                         baseDeDatos.rutas[`${o.id}-${d.id}`][fase.id] = viajes;
                         rutasCompletadas++;
