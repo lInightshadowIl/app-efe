@@ -452,6 +452,75 @@ function mostrarDetallePrecio(rutaKey) {
     document.body.appendChild(modal);
 }
 
+// ── GPS: detectar estación más cercana ──
+
+function haversineKm(lat1, lng1, lat2, lng2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) ** 2
+            + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180)
+            * Math.sin(dLng/2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function ubicarEstacionMasCercana() {
+    if (!navigator.geolocation) {
+        alert('Tu dispositivo no soporta geolocalización.');
+        return;
+    }
+
+    const btn = document.getElementById('btn-gps');
+    if (btn) { btn.textContent = '⏳'; btn.disabled = true; }
+
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            const { latitude, longitude } = pos.coords;
+
+            // Recopilar todas las estaciones con coordenadas
+            const todasEstaciones = [];
+            for (const linea of Object.values(estacionesEFE || {})) {
+                for (const est of linea) {
+                    if (est.lat != null && est.lng != null) todasEstaciones.push(est);
+                }
+            }
+
+            if (todasEstaciones.length === 0) {
+                alert('No hay coordenadas disponibles en estaciones.json.');
+                if (btn) { btn.textContent = '📍'; btn.disabled = false; }
+                return;
+            }
+
+            // Encontrar la más cercana
+            let cercana = null;
+            let minDist = Infinity;
+            for (const est of todasEstaciones) {
+                const dist = haversineKm(latitude, longitude, est.lat, est.lng);
+                if (dist < minDist) { minDist = dist; cercana = est; }
+            }
+
+            // Asignar al select de origen
+            const origenSelect = document.getElementById('origen-select');
+            if (origenSelect && cercana) {
+                origenSelect.value = cercana.id;
+                origenSelect.dispatchEvent(new Event('change'));
+            }
+
+            if (btn) { btn.textContent = '📍'; btn.disabled = false; }
+        },
+        (err) => {
+            const msgs = {
+                1: 'Permiso de ubicación denegado.',
+                2: 'No se pudo obtener la ubicación.',
+                3: 'Tiempo de espera agotado.'
+            };
+            alert(msgs[err.code] || 'Error de geolocalización.');
+            if (btn) { btn.textContent = '📍'; btn.disabled = false; }
+        },
+        { timeout: 8000, maximumAge: 60000 }
+    );
+}
+
 function getTendenciaPrecio(rutaKey) {
     if (!preciosHistorial) return null;
     const h = preciosHistorial[rutaKey];
