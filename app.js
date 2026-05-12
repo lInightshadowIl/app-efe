@@ -7,6 +7,7 @@ function getFechaLocal(fecha = new Date()) {
 }
 
 let baseDatos = null;
+let preciosHistorial = null; // Cargado desde precios-historial.json
 
 // Tipo de usuario: 'general' o 'estudiante', persistido en localStorage
 function getTipoUsuario() {
@@ -116,6 +117,11 @@ async function cargarDatos() {
 
         if (ultimaServidor === ultimaLocal) {
             console.log("✅ Horarios en caché vigentes");
+
+        // Cargar historial de precios en background (no bloquea)
+        fetchConTimeout('precios-historial.json', 3000)
+            .then(data => { preciosHistorial = data; })
+            .catch(() => {}); // Si no existe aún, no pasa nada
             return; // Sin cambios — no descarga los 4MB
         }
 
@@ -300,9 +306,10 @@ async function inicializarApp() {
                 viajesFiltrados = viajes.filter(t => t.s >= horaActualStr);
             }
 
-            const rutaData = baseDatos.rutas[`${origen}-${destino}`];
+            const rutaKey = `${origen}-${destino}`;
+            const rutaData = baseDatos.rutas[rutaKey];
             const precio = getPrecioRuta(rutaData);
-            renderizarHorarios(viajesFiltrados, horaActualStr, diaElegido === "hoy", precio);
+            renderizarHorarios(viajesFiltrados, horaActualStr, diaElegido === "hoy", precio, rutaKey);
         }
 
         function limpiarResultados() {
@@ -344,7 +351,7 @@ async function inicializarApp() {
     }
 }
 
-function renderizarHorarios(trenes, horaActual, esHoy, precioRuta = null) {
+function renderizarHorarios(trenes, horaActual, esHoy, precioRuta = null, rutaKey = null) {
     const contenedor = document.getElementById('resultados-container');
     if (trenes.length === 0) {
         contenedor.innerHTML = "<p class='no-data'>No hay trenes disponibles para esta ruta.</p>";
@@ -357,9 +364,11 @@ function renderizarHorarios(trenes, horaActual, esHoy, precioRuta = null) {
         const sinPrecioEstudiante = tipo === 'estudiante' && (!precioRuta?.valor || precioRuta?.pendiente);
 
         if (sinPrecioEstudiante) {
+            // Precio estudiante aún no scrapeado → mostrar pendiente con reloj
             precioHtml = `<span class="precio-pendiente" title="Precio estudiante pendiente de actualización">🕐 <span class="precio-tag">pendiente</span></span>`;
         } else {
-            precioHtml = `<span>💰 $${precioRuta?.valor || '—'}</span>`;
+            const valorMostrar = precioRuta?.valor || t.v;
+            precioHtml = `<span>💰 $${valorMostrar}</span>`;
         }
         return `
         <div class="tarjeta-tren ${(esHoy && t.s < horaActual) ? 'pasado' : ''}">
@@ -403,6 +412,67 @@ function inicializarSwitchUsuario() {
         setTipoUsuario(switchEl.checked ? 'estudiante' : 'general');
         actualizarTexto();
     });
+}
+
+function mostrarDetallePrecio(rutaKey) {
+    const h = preciosHistorial?.[rutaKey];
+    if (!h?.anterior || !h?.actual) return;
+
+    const tipo = getTipoUsuario();
+    const campo = tipo === 'estudiante' ? 'estudiante' : 'general';
+    const anterior = parseInt(h.anterior[campo]);
+    const actual = parseInt(h.actual[campo]);
+    const diff = actual - anterior;
+    const subio = diff > 0;
+
+    // Eliminar modal previo si existe
+    document.getElementById('modal-precio-hist')?.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'modal-precio-hist';
+    modal.innerHTML = `
+        <div class="modal-precio-backdrop" onclick="document.getElementById('modal-precio-hist').remove()"></div>
+        <div class="modal-precio-box">
+            <div class="modal-precio-titulo">Historial de precio</div>
+            <div class="modal-precio-fila">
+                <span class="modal-precio-fecha">${h.anterior.fecha}</span>
+                <span class="modal-precio-valor">$${anterior}</span>
+            </div>
+            <div class="modal-precio-fila modal-precio-actual">
+                <span class="modal-precio-fecha">${h.actual.fecha}</span>
+                <span class="modal-precio-valor">$${actual}
+                    <span class="modal-precio-diff ${subio ? 'subio' : 'bajo'}">
+                        ${subio ? '▲' : '▼'} $${Math.abs(diff)}
+                    </span>
+                </span>
+            </div>
+            <button class="modal-precio-cerrar" onclick="document.getElementById('modal-precio-hist').remove()">Cerrar</button>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function getTendenciaPrecio(rutaKey) {
+    if (!preciosHistorial) return null;
+    const h = preciosHistorial[rutaKey];
+    if (!h?.anterior || !h?.actual) return null;
+
+    const tipo = getTipoUsuario();
+    const campo = tipo === 'estudiante' ? 'estudiante' : 'general';
+    const anterior = parseInt(h.anterior[campo]);
+    const actual = parseInt(h.actual[campo]);
+
+    if (isNaN(anterior) || isNaN(actual) || anterior === actual) return null;
+
+    const diff = actual - anterior;
+    const fechaAnterior = h.anterior.fecha;
+    return {
+        subio: diff > 0,
+        diff: Math.abs(diff),
+        fechaAnterior,
+        anterior,
+        actual
+    };
 }
 
 function getPrecioRuta(ruta) {
@@ -756,7 +826,7 @@ async function consultarFavorito(idx, btnEl) {
                         <span>⏱ ${t.d}</span>
                         ${(getTipoUsuario() === 'estudiante' && (!precioRutaFav?.valor || precioRutaFav?.pendiente))
                             ? `<span class="precio-pendiente" title="Precio estudiante pendiente de actualización">🕐 <span class="precio-tag">pendiente</span></span>`
-                            : `<span>💰 $${precioRutaFav?.valor || '—'}</span>`
+                            : `<span>💰 $${precioRutaFav?.valor || t.v}</span>`
                         }
                     </div>
                 </div>
