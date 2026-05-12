@@ -1132,3 +1132,24 @@ body {
     font-size: 0.85rem;
 }
 .modal-precio-cerrar:hover { background: #2a3a5c; }
+
+/* ── Botón GPS ── */
+.origen-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+.btn-gps {
+    background: transparent;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    padding: 3px 8px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: var(--texto-secundario);
+    transition: background 0.2s;
+    line-height: 1.4;
+}
+.btn-gps:hover { background: var(--superficie); }
+.btn-gps:disabled { opacity: 0.5; cursor: wait; }
