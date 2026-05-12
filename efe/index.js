@@ -348,26 +348,27 @@ async function iniciarScraper() {
 
                         const $ = cheerio.load(res.data);
                         let viajes = [];
+                        const yaTienePrecios = baseDeDatos.rutas[`${o.id}-${d.id}`].precios.general !== null;
 
                         $('.tablaTren tbody tr').each((_, el) => {
                             const tds = $(el).find('td');
                             if (tds.length >= 4) {
+                                // No guardamos v en cada viaje — el precio está en precios.general
                                 viajes.push({
                                     s: $(tds[0]).text().trim(),
                                     ll: $(tds[1]).text().trim(),
-                                    d: $(tds[2]).text().trim(),
-                                    v: $(tds[3]).text().replace(/[^0-9]/g, '')
+                                    d: $(tds[2]).text().trim()
                                 });
                             }
                         });
 
-                        // Guardar precio general desde el primer viaje
-                        if (viajes.length > 0) {
-                            baseDeDatos.rutas[`${o.id}-${d.id}`].precios.general = viajes[0].v;
-                        }
+                        // Precios solo en el primer día que tenga viajes (son iguales todos los días)
+                        if (viajes.length > 0 && !yaTienePrecios) {
+                            // Precio general: del campo precio de la misma respuesta
+                            const tdsPrecio = $('.tablaTren tbody tr').first().find('td');
+                            baseDeDatos.rutas[`${o.id}-${d.id}`].precios.general = $(tdsPrecio[3]).text().replace(/[^0-9]/g, '');
 
-                        // Scrapear precio estudiante solo UNA vez por ruta (primer día que tenga viajes)
-                        if (viajes.length > 0 && baseDeDatos.rutas[`${o.id}-${d.id}`].precios.estudiante === null) {
+                            // Precio estudiante: una request extra con usuario 2
                             try {
                                 const resEst = await axios.get(`https://www.efe.cl/planificador/`, {
                                     params: { empresa: 6, origen: o.id, destino: d.id, salida: fase.fecha, usuario: 2, ida: 1 },
