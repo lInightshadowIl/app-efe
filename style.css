@@ -1056,3 +1056,79 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.4px;
 }
+
+/* ── Tendencia de precio ── */
+.precio-tendencia {
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-left: 4px;
+    display: inline-block;
+    transition: transform 0.15s ease;
+}
+.precio-tendencia:hover { transform: scale(1.2); }
+.precio-tendencia.subio { filter: hue-rotate(0deg); }
+.precio-tendencia.bajo  { filter: hue-rotate(0deg); }
+
+/* ── Modal historial de precio ── */
+.modal-precio-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 9998;
+}
+.modal-precio-box {
+    position: fixed;
+    bottom: 50%;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    background: #1a2236;
+    border: 1px solid #2a3a5c;
+    border-radius: 14px;
+    padding: 20px;
+    width: min(320px, 90vw);
+    z-index: 9999;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+.modal-precio-titulo {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--texto-secundario);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 16px;
+}
+.modal-precio-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #2a3a5c;
+    font-size: 0.9rem;
+}
+.modal-precio-actual {
+    border-bottom: none;
+    font-weight: 600;
+}
+.modal-precio-fecha { color: var(--texto-secundario); }
+.modal-precio-valor { color: #e0e0e0; }
+.modal-precio-diff {
+    font-size: 0.78rem;
+    font-weight: 700;
+    margin-left: 8px;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+.modal-precio-diff.subio { background: #7f1d1d; color: #fca5a5; }
+.modal-precio-diff.bajo  { background: #14532d; color: #86efac; }
+.modal-precio-cerrar {
+    margin-top: 16px;
+    width: 100%;
+    padding: 9px;
+    background: transparent;
+    border: 1px solid #2a3a5c;
+    border-radius: 8px;
+    color: var(--texto-secundario);
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+.modal-precio-cerrar:hover { background: #2a3a5c; }
