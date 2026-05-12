@@ -205,10 +205,9 @@
 
                         newWorker.addEventListener('statechange', () => {
                             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // Hay una versión nueva en caché, lista para la próxima visita.
-                                // Mostramos un banner suave — el usuario decide cuándo recargar.
-                                console.log('✨ Nueva versión disponible en background.');
-                                mostrarBannerActualizacion();
+                                // SW nuevo listo → recargar automáticamente
+                                console.log('✨ Nueva versión disponible, recargando...');
+                                window.location.reload();
                             }
                         });
                     });
@@ -223,47 +222,7 @@
         console.warn('⚠️ Service Workers no soportados');
     }
 
-    // Banner no intrusivo — aparece abajo, el usuario decide cuándo recargar
-    function mostrarBannerActualizacion() {
-        // Evita duplicados si se llama más de una vez
-        if (document.getElementById('banner-update')) return;
 
-        const banner = document.createElement('div');
-        banner.id = 'banner-update';
-        banner.style.cssText = `
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #1a2236;
-            color: #e0e0e0;
-            border-top: 1px solid #2a3a5c;
-            padding: 12px 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 12px;
-            font-size: 14px;
-            z-index: 9999;
-            box-shadow: 0 -2px 12px rgba(0,0,0,0.4);
-        `;
-        banner.innerHTML = `
-            <span>🚉 Hay una nueva versión disponible</span>
-            <div style="display:flex;gap:8px">
-                <button onclick="this.closest('#banner-update').remove()"
-                        style="background:transparent;border:1px solid #4a6a9c;color:#9ab;
-                               padding:6px 12px;border-radius:6px;cursor:pointer;font-size:13px">
-                    Ahora no
-                </button>
-                <button onclick="window.location.reload()"
-                        style="background:#2a5caa;border:none;color:#fff;
-                               padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600">
-                    Actualizar
-                </button>
-            </div>
-        `;
-        document.body.appendChild(banner);
-    }
 </script>
 
 </body>
