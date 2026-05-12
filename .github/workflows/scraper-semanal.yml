@@ -73,6 +73,43 @@ jobs:
       - name: 📦 Instalar dependencias
         working-directory: ./efe
         run: npm install
+
+      - name: 💰 Capturar precios anteriores (antes de scrapear)
+        run: |
+          node -e "
+          const fs = require('fs');
+
+          // Si no existe horarios.json todavía, no hay nada que capturar
+          if (!fs.existsSync('horarios.json')) {
+            console.log('No existe horarios.json previo, omitiendo captura anterior.');
+            process.exit(0);
+          }
+
+          const horarios = JSON.parse(fs.readFileSync('horarios.json', 'utf-8'));
+          const fechaActual = horarios.ultima_update || 'desconocida';
+
+          // Leer historial existente o crear uno vacío
+          let historial = {};
+          if (fs.existsSync('precios-historial.json')) {
+            historial = JSON.parse(fs.readFileSync('precios-historial.json', 'utf-8'));
+          }
+
+          // Rotar: el 'actual' pasa a ser 'anterior' para cada ruta
+          for (const [key, ruta] of Object.entries(horarios.rutas)) {
+            if (!ruta.precios) continue;
+            historial[key] = {
+              anterior: {
+                fecha: fechaActual,
+                general: ruta.precios.general,
+                estudiante: ruta.precios.estudiante
+              },
+              actual: historial[key]?.actual || null
+            };
+          }
+
+          fs.writeFileSync('precios-historial.json', JSON.stringify(historial));
+          console.log('✅ Precios anteriores guardados correctamente.');
+          "
       
       - name: 🚂 Ejecutar scraper
         id: scraper
@@ -95,6 +132,34 @@ jobs:
             exit 1
           fi
       
+      - name: 💰 Capturar precios nuevos (después de scrapear)
+        run: |
+          node -e "
+          const fs = require('fs');
+
+          const horarios = JSON.parse(fs.readFileSync('horarios.json', 'utf-8'));
+          const fechaNueva = horarios.ultima_update || 'desconocida';
+
+          let historial = {};
+          if (fs.existsSync('precios-historial.json')) {
+            historial = JSON.parse(fs.readFileSync('precios-historial.json', 'utf-8'));
+          }
+
+          // Guardar precios nuevos como 'actual'
+          for (const [key, ruta] of Object.entries(horarios.rutas)) {
+            if (!ruta.precios) continue;
+            if (!historial[key]) historial[key] = { anterior: null };
+            historial[key].actual = {
+              fecha: fechaNueva,
+              general: ruta.precios.general,
+              estudiante: ruta.precios.estudiante
+            };
+          }
+
+          fs.writeFileSync('precios-historial.json', JSON.stringify(historial));
+          console.log('✅ Precios nuevos guardados correctamente.');
+          "
+
       - name: 💾 Commit y push de resultados
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
@@ -105,7 +170,7 @@ jobs:
           git pull --rebase origin main || git pull --rebase origin master || true
           git stash pop || true
 
-          git add horarios.json version.json
+          git add horarios.json version.json precios-historial.json
           if git diff --staged --quiet; then
             echo "Sin cambios en horarios.json ni version.json"
           else
