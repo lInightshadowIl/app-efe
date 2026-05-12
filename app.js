@@ -357,11 +357,9 @@ function renderizarHorarios(trenes, horaActual, esHoy, precioRuta = null) {
         const sinPrecioEstudiante = tipo === 'estudiante' && (!precioRuta?.valor || precioRuta?.pendiente);
 
         if (sinPrecioEstudiante) {
-            // Precio estudiante aún no scrapeado → mostrar pendiente con reloj
             precioHtml = `<span class="precio-pendiente" title="Precio estudiante pendiente de actualización">🕐 <span class="precio-tag">pendiente</span></span>`;
         } else {
-            const valorMostrar = precioRuta?.valor || t.v;
-            precioHtml = `<span>💰 $${valorMostrar}</span>`;
+            precioHtml = `<span>💰 $${precioRuta?.valor || '—'}</span>`;
         }
         return `
         <div class="tarjeta-tren ${(esHoy && t.s < horaActual) ? 'pasado' : ''}">
@@ -758,7 +756,7 @@ async function consultarFavorito(idx, btnEl) {
                         <span>⏱ ${t.d}</span>
                         ${(getTipoUsuario() === 'estudiante' && (!precioRutaFav?.valor || precioRutaFav?.pendiente))
                             ? `<span class="precio-pendiente" title="Precio estudiante pendiente de actualización">🕐 <span class="precio-tag">pendiente</span></span>`
-                            : `<span>💰 $${precioRutaFav?.valor || t.v}</span>`
+                            : `<span>💰 $${precioRutaFav?.valor || '—'}</span>`
                         }
                     </div>
                 </div>
