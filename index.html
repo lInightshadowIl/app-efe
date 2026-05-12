@@ -111,7 +111,10 @@
         </select>
 
         <div class="estaciones-container">
-            <label>Origen:</label>
+            <div class="origen-label-row">
+                <label>Origen:</label>
+                <button id="btn-gps" type="button" class="btn-gps" onclick="ubicarEstacionMasCercana()" title="Usar mi ubicación">📍</button>
+            </div>
             <select id="origen-select"></select>
 
             <button id="btn-swap" type="button" class="swap-button">
