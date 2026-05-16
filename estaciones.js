@@ -23,11 +23,11 @@ const estacionesEFE = {
         { id: "27", lat: -36.8680406,   lng: -73.1352565,   nombre: "El Parque" },
         { id: "28", lat: -36.882732889, lng: -73.139622495, nombre: "Lomas Coloradas" },
         { id: "29", lat: -36.8982835,   lng: -73.1413321,   nombre: "Cardenal Raúl Silva H." },
-        { id: "30", lat: -36.9533195,   lng: -73.1545593,   nombre: "Hito Galvarino" },
-        { id: "31", lat: -36.9798198,   lng: -73.1604823,   nombre: "Los Canelos" },
-        { id: "32", lat: -36.9877651,   lng: -73.160903,    nombre: "Huinca" },
-        { id: "33", lat: -36.9982793,   lng: -73.1606352,   nombre: "Cristo Redentor" },
-        { id: "34", lat: -37.0121383,   lng: -73.1568824,   nombre: "Laguna Quiñenco" },
-        { id: "35", lat: -37.023597178, lng: -73.152215829, nombre: "Intermodal Coronel" }
+        { id: "30", lat: -36.953874415430725,  lng: -73.1567433178572,   nombre: "Hito Galvarino" },
+        { id: "31", lat: -36.97990642104991,   lng: -73.16271623873433,  nombre: "Los Canelos" },
+        { id: "32", lat: -36.98861389479508,   lng: -73.16309707904992,  nombre: "Huinca" },
+        { id: "33", lat: -36.99881490925298,   lng: -73.16264632421812,   nombre: "Cristo Redentor" },
+        { id: "34", lat: -37.012840353121916,  lng: -73.15799000943946,   nombre: "Laguna Quiñenco" },
+        { id: "35", lat: -37.024366145296135,  lng: -73.15063644186293, nombre: "Intermodal Coronel" }
     ]
 };
