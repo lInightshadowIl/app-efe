@@ -358,13 +358,15 @@ function renderizarHorarios(trenes, horaActual, esHoy, precioRuta = null, rutaKe
         return;
     }
 
-    contenedor.innerHTML = trenes.map(t => {
+    const POR_PAGINA = 8;
+    let paginaActual = 0;
+
+    function generarTarjeta(t) {
         let precioHtml;
         const tipo = getTipoUsuario();
         const sinPrecioEstudiante = tipo === 'estudiante' && (!precioRuta?.valor || precioRuta?.pendiente);
 
         if (sinPrecioEstudiante) {
-            // Precio estudiante aún no scrapeado → mostrar pendiente con reloj
             precioHtml = `<span class="precio-pendiente" title="Precio estudiante pendiente de actualización">🕐 <span class="precio-tag">pendiente</span></span>`;
         } else {
             const valorMostrar = precioRuta?.valor || t.v;
@@ -387,7 +389,29 @@ function renderizarHorarios(trenes, horaActual, esHoy, precioRuta = null, rutaKe
                 <span>⏱️ ${t.d}</span> | ${precioHtml}
             </div>
         </div>`;
-    }).join('');
+    }
+
+    function renderPagina() {
+        const inicio = 0;
+        const fin = (paginaActual + 1) * POR_PAGINA;
+        const visible = trenes.slice(inicio, fin);
+        const hayMas = fin < trenes.length;
+
+        contenedor.innerHTML = visible.map(generarTarjeta).join('');
+
+        if (hayMas) {
+            const btnNext = document.createElement('button');
+            btnNext.className = 'btn-pagina-siguiente';
+            btnNext.textContent = `Siguiente página (${Math.min(POR_PAGINA, trenes.length - fin)} más)`;
+            btnNext.addEventListener('click', () => {
+                paginaActual++;
+                renderPagina();
+            });
+            contenedor.appendChild(btnNext);
+        }
+    }
+
+    renderPagina();
 }
 
 function inicializarSwitchUsuario() {
