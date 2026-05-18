@@ -392,23 +392,46 @@ function renderizarHorarios(trenes, horaActual, esHoy, precioRuta = null, rutaKe
     }
 
     function renderPagina() {
-        const inicio = 0;
-        const fin = (paginaActual + 1) * POR_PAGINA;
+        const inicio = paginaActual * POR_PAGINA;
+        const fin = inicio + POR_PAGINA;
         const visible = trenes.slice(inicio, fin);
-        const hayMas = fin < trenes.length;
+        const totalPaginas = Math.ceil(trenes.length / POR_PAGINA);
 
         contenedor.innerHTML = visible.map(generarTarjeta).join('');
 
-        if (hayMas) {
+        const nav = document.createElement('div');
+        nav.className = 'paginacion-nav';
+
+        if (paginaActual > 0) {
+            const btnPrev = document.createElement('button');
+            btnPrev.className = 'btn-pagina-anterior';
+            btnPrev.textContent = '← Anterior';
+            btnPrev.addEventListener('click', () => {
+                paginaActual--;
+                renderPagina();
+                contenedor.scrollIntoView({ behavior: 'smooth' });
+            });
+            nav.appendChild(btnPrev);
+        }
+
+        const info = document.createElement('span');
+        info.className = 'paginacion-info';
+        info.textContent = `${paginaActual + 1} / ${totalPaginas}`;
+        nav.appendChild(info);
+
+        if (fin < trenes.length) {
             const btnNext = document.createElement('button');
             btnNext.className = 'btn-pagina-siguiente';
-            btnNext.textContent = `Siguiente página (${Math.min(POR_PAGINA, trenes.length - fin)} más)`;
+            btnNext.textContent = 'Siguiente →';
             btnNext.addEventListener('click', () => {
                 paginaActual++;
                 renderPagina();
+                contenedor.scrollIntoView({ behavior: 'smooth' });
             });
-            contenedor.appendChild(btnNext);
+            nav.appendChild(btnNext);
         }
+
+        contenedor.appendChild(nav);
     }
 
     renderPagina();
