@@ -358,7 +358,7 @@ function renderizarHorarios(trenes, horaActual, esHoy, precioRuta = null, rutaKe
         return;
     }
 
-    const POR_PAGINA = 6;
+    const POR_PAGINA = 5;
     let paginaActual = 0;
 
     function generarTarjeta(t) {
@@ -401,6 +401,11 @@ function renderizarHorarios(trenes, horaActual, esHoy, precioRuta = null, rutaKe
 
         const nav = document.createElement('div');
         nav.className = 'paginacion-nav';
+
+        if (totalPaginas <= 1) {
+            contenedor.appendChild(nav);
+            return;
+        }
 
         if (paginaActual > 0) {
             const btnPrev = document.createElement('button');
