@@ -1165,11 +1165,12 @@ body {
 .paginacion-info {
     font-size: 0.85rem;
     color: var(--texto-secundario);
-    flex: 1;
+    min-width: 48px;
     text-align: center;
 }
 .btn-pagina-siguiente,
 .btn-pagina-anterior {
+    min-width: 110px;
     padding: 10px 16px;
     background: var(--superficie);
     color: var(--azul-efe, #4f8ef7);
