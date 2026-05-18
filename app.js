@@ -412,6 +412,11 @@ function renderizarHorarios(trenes, horaActual, esHoy, precioRuta = null, rutaKe
                 contenedor.scrollIntoView({ behavior: 'smooth' });
             });
             nav.appendChild(btnPrev);
+        } else {
+            const spacer = document.createElement('span');
+            spacer.className = 'btn-pagina-anterior';
+            spacer.style.visibility = 'hidden';
+            nav.appendChild(spacer);
         }
 
         const info = document.createElement('span');
@@ -429,6 +434,11 @@ function renderizarHorarios(trenes, horaActual, esHoy, precioRuta = null, rutaKe
                 contenedor.scrollIntoView({ behavior: 'smooth' });
             });
             nav.appendChild(btnNext);
+        } else {
+            const spacer = document.createElement('span');
+            spacer.className = 'btn-pagina-siguiente';
+            spacer.style.visibility = 'hidden';
+            nav.appendChild(spacer);
         }
 
         contenedor.appendChild(nav);
