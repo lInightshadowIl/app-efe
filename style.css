@@ -1155,18 +1155,30 @@ body {
 .btn-gps:disabled { opacity: 0.5; cursor: wait; }
 
 /* ── Paginación búsqueda manual ── */
-.btn-pagina-siguiente {
-    display: block;
-    width: 100%;
+.paginacion-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     margin-top: 12px;
-    padding: 12px;
+    gap: 8px;
+}
+.paginacion-info {
+    font-size: 0.85rem;
+    color: var(--texto-secundario);
+    flex: 1;
+    text-align: center;
+}
+.btn-pagina-siguiente,
+.btn-pagina-anterior {
+    padding: 10px 16px;
     background: var(--superficie);
     color: var(--azul-efe, #4f8ef7);
     border: 1px solid var(--azul-efe, #4f8ef7);
     border-radius: 10px;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.2s;
 }
-.btn-pagina-siguiente:hover { background: rgba(79,142,247,0.1); }
+.btn-pagina-siguiente:hover,
+.btn-pagina-anterior:hover { background: rgba(79,142,247,0.1); }
