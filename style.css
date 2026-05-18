@@ -1153,3 +1153,20 @@ body {
 }
 .btn-gps:hover { background: var(--superficie); }
 .btn-gps:disabled { opacity: 0.5; cursor: wait; }
+
+/* ── Paginación búsqueda manual ── */
+.btn-pagina-siguiente {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 12px;
+    background: var(--superficie);
+    color: var(--azul-efe, #4f8ef7);
+    border: 1px solid var(--azul-efe, #4f8ef7);
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.btn-pagina-siguiente:hover { background: rgba(79,142,247,0.1); }
