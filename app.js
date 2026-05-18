@@ -347,7 +347,7 @@ async function inicializarApp() {
     } catch (error) {
         console.error("❌ Error crítico al inicializar app:", error);
         document.getElementById('resultados-container').innerHTML = 
-            "<p class='no-data'>Error al cargar la aplicación. Revisa la consola.</p>";
+            "<p class='no-data'>Error al cargar la aplicación.</p>";
     }
 }
 
