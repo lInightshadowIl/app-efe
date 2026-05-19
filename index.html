@@ -26,6 +26,13 @@
 <link rel="apple-touch-icon" sizes="57x57" href="icons/icon-57x57.png">
 <link rel="apple-touch-icon" href="https://www.efe.cl/wp-content/themes/efe/assets/img/logo-efe.png">
 
+<!--
+    CSS CRÍTICO INLINE
+    Se aplica en el primer frame, antes de que el navegador descargue style.css.
+    Evita el flash negro/blanco al abrir la app con internet lento u offline.
+    Solo contiene lo mínimo: fondo, color de texto y una transición suave.
+    El resto del diseño sigue en style.css sin cambios.
+-->
 <style>
     html, body {
         margin: 0;
@@ -136,6 +143,7 @@
     <footer class="app-footer">
         <span>Horarios actualizados: <strong id="footer-ultima-update">—</strong></span>
         <span id="conexion-dot" class="conexion-dot"></span>
+        <span id="sw-version-text" class="sw-version-text">versión: —</span>
     </footer>
 </div>
 
@@ -167,7 +175,24 @@
 <script src="estaciones.js"></script>
 <script src="app.js"></script>
 
-
+<!--
+    REGISTRO DEL SERVICE WORKER
+    
+    Cambios respecto a la versión anterior:
+    
+    1. Se eliminó el bloque 'controllerchange' que forzaba window.location.reload()
+       automáticamente. Ese reload era la pantalla blanca: el SW nuevo tomaba control
+       y la app se recargaba sin avisar al usuario.
+    
+       Con la nueva estrategia staleWhileRevalidate en sw.js, el HTML/JS/CSS se
+       actualiza en background y la nueva versión queda lista para la PRÓXIMA visita.
+       No hace falta recargar en medio de la sesión del usuario.
+    
+    2. Cuando hay una versión nueva lista (newWorker.state === 'installed'), se muestra
+       un banner no intrusivo. El usuario decide cuándo recargar.
+    
+    3. La verificación periódica cada hora se mantiene igual.
+-->
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
