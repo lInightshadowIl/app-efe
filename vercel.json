@@ -4,15 +4,29 @@
     {
       "source": "/service-worker.js",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
       ]
     }
   ],
   "rewrites": [
-    { "source": "/horarios.json",         "destination": "/api/datos" },
-    { "source": "/precios-historial.json","destination": "/api/datos" },
-    { "source": "/version.json",          "destination": "/api/datos" },
-    { "source": "/app.js",                 "destination": "/api/datos" },
-    { "source": "/estaciones.js",          "destination": "/api/datos" }
+    {
+      "source": "/horarios.json",
+      "destination": "/api/datos"
+    },
+    {
+      "source": "/version.json",
+      "destination": "/api/datos"
+    },
+    {
+      "source": "/app.js",
+      "destination": "/api/datos"
+    },
+    {
+      "source": "/estaciones.js",
+      "destination": "/api/datos"
+    }
   ]
 }
