@@ -774,8 +774,7 @@ body {
     justify-content: center;
     backdrop-filter: blur(4px);
     padding: 0;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    transition: bottom 0.25s ease;
 }
 
 .modal-overlay.visible {
@@ -791,18 +790,18 @@ body {
 .modal-box {
     background: var(--fondo-tarjeta);
     border-radius: 20px 20px 0 0;
-    padding: 28px 24px 36px;
+    padding: 24px 20px 16px;
     width: 100%;
     max-width: 600px;
     animation: slideUp 0.25s ease;
     border-top: 3px solid var(--azul-efe);
-    max-height: 90vh;
+    max-height: 85vh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     position: relative;
     margin-top: auto;
-    /* Padding extra al final para que los botones sean visibles cuando hay teclado */
-    padding-bottom: max(36px, env(safe-area-inset-bottom));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    box-sizing: border-box;
 }
 
 @keyframes slideUp {
@@ -810,32 +809,27 @@ body {
     to   { transform: translateY(0); opacity: 1; }
 }
 
-/* Ajuste para cuando el teclado está visible en móviles */
-@media screen and (max-height: 600px) {
+/* Cuando el teclado está visible, reducir tamaño del modal */
+@media screen and (max-height: 500px) {
     .modal-box {
         max-height: 100vh;
-        padding: 18px 16px;
-        padding-bottom: 24px;
-        border-radius: 16px 16px 0 0;
+        padding: 14px 16px 8px;
+        border-radius: 12px 12px 0 0;
     }
-    
     .modal-titulo {
-        font-size: 1rem;
-        margin-bottom: 14px;
-    }
-    
-    .modal-campo {
+        font-size: 0.95rem;
         margin-bottom: 10px;
     }
-    
+    .modal-campo {
+        margin-bottom: 8px;
+    }
     .modal-campo input,
     .modal-campo select {
-        padding: 10px 12px;
+        padding: 9px 12px;
         font-size: 0.9rem;
     }
-    
     .modal-botones {
-        margin-top: 16px;
+        margin-top: 10px;
     }
 }
 
@@ -1005,13 +999,6 @@ body {
     background: #6b7280;
     flex-shrink: 0;
     transition: background 0.4s ease;
-}
-
-.sw-version-text {
-    font-size: 0.72rem;
-    color: var(--texto-secundario);
-    opacity: 0.6;
-    user-select: none;
 }
 
 
