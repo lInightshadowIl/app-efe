@@ -1,9 +1,8 @@
-const fs   = require('fs');
-const path = require('path');
+import fs   from 'fs';
+import path from 'path';
 
 const RUTAS = {
     '/horarios.json':          'horarios.json',
-    '/precios-historial.json': 'precios-historial.json',
     '/version.json':           'version.json',
     '/app.js':                 'app.js',
     '/estaciones.js':          'estaciones.js'
@@ -14,7 +13,7 @@ const MIME = {
     '.js':   'application/javascript; charset=utf-8'
 };
 
-module.exports = function handler(req, res) {
+export default function handler(req, res) {
     const tokenEsperado = process.env.BIOTREN_TOKEN;
     const tokenRecibido = req.headers['x-biotren-client'];
 
