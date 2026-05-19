@@ -1007,6 +1007,13 @@ body {
     transition: background 0.4s ease;
 }
 
+.sw-version-text {
+    font-size: 0.72rem;
+    color: var(--texto-secundario);
+    opacity: 0.6;
+    user-select: none;
+}
+
 
 /* ── Switch tipo de pasajero ── */
 .switch-usuario-container {
