@@ -5,7 +5,7 @@
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0b0e14",
-    "theme_color": "#ff4d4d",
+    "theme_color": "#0b0e14",
     "orientation": "portrait",
     "scope": "/",
     "icons": [
@@ -58,7 +58,10 @@
             "purpose": "any maskable"
         }
     ],
-    "categories": ["transportation", "travel"],
+    "categories": [
+        "transportation",
+        "travel"
+    ],
     "lang": "es-CL",
     "dir": "ltr"
 }
