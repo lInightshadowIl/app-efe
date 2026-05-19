@@ -1,5 +1,5 @@
-import fs   from 'fs';
-import path from 'path';
+const fs   = require('fs');
+const path = require('path');
 
 const RUTAS = {
     '/horarios.json':          'horarios.json',
@@ -14,7 +14,7 @@ const MIME = {
     '.js':   'application/javascript; charset=utf-8'
 };
 
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
     const tokenEsperado = process.env.BIOTREN_TOKEN;
     const tokenRecibido = req.headers['x-biotren-client'];
 
