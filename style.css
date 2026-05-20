@@ -774,6 +774,7 @@ body {
     justify-content: center;
     backdrop-filter: blur(4px);
     padding: 0;
+    overflow: hidden;
     transition: bottom 0.25s ease;
 }
 
@@ -796,12 +797,17 @@ body {
     animation: slideUp 0.25s ease;
     border-top: 3px solid var(--azul-efe);
     max-height: 85vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-y: hidden;
     position: relative;
     margin-top: auto;
     padding-bottom: max(16px, env(safe-area-inset-bottom));
     box-sizing: border-box;
+}
+
+/* Solo permitir scroll dentro del modal cuando hay teclado visible */
+.modal-box.teclado-visible {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 @keyframes slideUp {
