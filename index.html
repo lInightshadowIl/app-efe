@@ -235,12 +235,12 @@
     if (!modal) return;
 
     var scrollPosition = 0;
+    // Detección de iOS (iPhone, iPad, iPod y Safari en Mac con pantalla táctil)
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-    function fitOverlay() {
+    function fitOverlayIOS() {
         if (window.visualViewport) {
             var vv = window.visualViewport;
-            // Truco "Giant Overlay": Usamos un tamaño gigante para garantizar que el fondo oscuro
-            // siempre cubra toda la pantalla, sin importar los saltos que haga iOS Safari.
             var overSize = 3000; 
             modal.style.position = 'fixed';
             modal.style.top      = '-' + overSize + 'px';
@@ -248,8 +248,6 @@
             modal.style.width    = '100%';
             modal.style.height   = (window.innerHeight + overSize * 2) + 'px';
             
-            // Ajustamos el padding para que la caja del formulario (modal-box) quede 
-            // delimitada de forma matemáticamente exacta al visualViewport actual.
             var paddingTop = overSize + vv.offsetTop;
             var paddingBottom = Math.max(0, (window.innerHeight + overSize) - (vv.offsetTop + vv.height));
             
@@ -289,37 +287,48 @@
 
     var observer = new MutationObserver(function () {
         if (modal.classList.contains('visible')) {
-            // Guardar posición de scroll y fijar body
-            scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-            document.body.style.position = 'fixed';
-            document.body.style.top = '-' + scrollPosition + 'px';
-            document.body.style.width = '100%';
-            document.body.style.overflow = 'hidden';
+            if (isIOS) {
+                // Lógica exclusiva para iOS: Giant Overlay + Body Fixed
+                scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+                document.body.style.position = 'fixed';
+                document.body.style.top = '-' + scrollPosition + 'px';
+                document.body.style.width = '100%';
+                document.body.style.overflow = 'hidden';
 
-            fitOverlay();
-            
-            if (window.visualViewport) {
-                window.visualViewport.addEventListener('resize', fitOverlay);
-                window.visualViewport.addEventListener('scroll', fitOverlay);
+                fitOverlayIOS();
+                
+                if (window.visualViewport) {
+                    window.visualViewport.addEventListener('resize', fitOverlayIOS);
+                    window.visualViewport.addEventListener('scroll', fitOverlayIOS);
+                } else {
+                    window.addEventListener('resize', fitOverlayIOS);
+                }
             } else {
-                window.addEventListener('resize', fitOverlay);
+                // Lógica para Android: Chrome gestiona el teclado redimensionando el layout nativamente.
+                // Solo bloqueamos el scroll del body para evitar que el fondo se mueva.
+                document.body.style.overflow = 'hidden';
             }
             modal.addEventListener('touchmove', blockScroll, { passive: false });
         } else {
-            // Restaurar scroll de body
-            document.body.style.position = '';
-            document.body.style.top = '';
-            document.body.style.width = '';
-            document.body.style.overflow = '';
-            window.scrollTo(0, scrollPosition);
+            if (isIOS) {
+                document.body.style.position = '';
+                document.body.style.top = '';
+                document.body.style.width = '';
+                document.body.style.overflow = '';
+                window.scrollTo(0, scrollPosition);
 
-            resetOverlay();
-            
-            if (window.visualViewport) {
-                window.visualViewport.removeEventListener('resize', fitOverlay);
-                window.visualViewport.removeEventListener('scroll', fitOverlay);
+                resetOverlay();
+                
+                if (window.visualViewport) {
+                    window.visualViewport.removeEventListener('resize', fitOverlayIOS);
+                    window.visualViewport.removeEventListener('scroll', fitOverlayIOS);
+                } else {
+                    window.removeEventListener('resize', fitOverlayIOS);
+                }
             } else {
-                window.removeEventListener('resize', fitOverlay);
+                // Restaurar Android
+                document.body.style.overflow = '';
+                resetOverlay();
             }
             modal.removeEventListener('touchmove', blockScroll);
         }
