@@ -149,25 +149,31 @@
 
 <!-- Modal Crear / Editar Ruta Favorita -->
 <div class="modal-overlay" id="modal-favorito" data-modo="crear">
-    <div class="modal-box">
-        <div class="modal-titulo">⭐ <span id="modal-titulo-txt">Nueva Ruta Favorita</span></div>
+    <div class="isl_scroller">
+        <div class="isl_scroller_inner">
+            <div class="isl_scroller_content">
+                <div class="modal-box">
+                    <div class="modal-titulo">⭐ <span id="modal-titulo-txt">Nueva Ruta Favorita</span></div>
 
-        <div class="modal-campo">
-            <label>Nombre de la ruta</label>
-            <input type="text" id="fav-nombre" placeholder="Ej: Trabajo, Casa, Universidad…" maxlength="30">
-        </div>
-        <div class="modal-campo">
-            <label>Origen</label>
-            <select id="fav-origen"></select>
-        </div>
-        <div class="modal-campo">
-            <label>Destino</label>
-            <select id="fav-destino"></select>
-        </div>
+                    <div class="modal-campo">
+                        <label>Nombre de la ruta</label>
+                        <input type="text" id="fav-nombre" placeholder="Ej: Trabajo, Casa, Universidad…" maxlength="30">
+                    </div>
+                    <div class="modal-campo">
+                        <label>Origen</label>
+                        <select id="fav-origen"></select>
+                    </div>
+                    <div class="modal-campo">
+                        <label>Destino</label>
+                        <select id="fav-destino"></select>
+                    </div>
 
-        <div class="modal-botones">
-            <button class="btn-modal-cancelar" id="btn-modal-cancelar">Cancelar</button>
-            <button class="btn-modal-guardar"  id="btn-modal-guardar">⭐ Guardar ruta</button>
+                    <div class="modal-botones">
+                        <button class="btn-modal-cancelar" id="btn-modal-cancelar">Cancelar</button>
+                        <button class="btn-modal-guardar"  id="btn-modal-guardar">⭐ Guardar ruta</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -230,52 +236,13 @@
 </script>
 
 <script>
-(function() {
-    const modal = document.getElementById('modal-favorito');
-    const box   = modal ? modal.querySelector('.modal-box') : null;
-    if (!modal || !box) return;
-
-    let scrollY = 0;
-
-    function adjustBox() {
-        if (!modal.classList.contains('visible')) return;
-        const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-        box.style.maxHeight = (h * 0.92) + 'px';
+// ISL: medir --isl-vh una sola vez en iOS para que el holder cubra el alto real
+(function () {
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    function setVh() {
+        document.documentElement.style.setProperty('--isl-vh', window.innerHeight * 0.01 + 'px');
     }
-
-    function onOpen() {
-        scrollY = window.scrollY || document.documentElement.scrollTop;
-        document.body.style.top      = '-' + scrollY + 'px';
-        document.body.style.left     = '0';
-        document.body.style.right    = '0';
-        document.body.style.position = 'fixed';
-        document.body.style.overflow = 'hidden';
-        document.documentElement.style.overflow = 'hidden';
-        adjustBox();
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', adjustBox);
-        }
-    }
-
-    function onClose() {
-        document.body.style.top      = '';
-        document.body.style.left     = '';
-        document.body.style.right    = '';
-        document.body.style.position = '';
-        document.body.style.overflow = '';
-        document.documentElement.style.overflow = '';
-        box.style.maxHeight = '';
-        if (window.visualViewport) {
-            window.visualViewport.removeEventListener('resize', adjustBox);
-        }
-        window.scrollTo(0, scrollY);
-    }
-
-    const observer = new MutationObserver(function() {
-        modal.classList.contains('visible') ? onOpen() : onClose();
-    });
-
-    observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+    if (isIOS) { setVh(); window.addEventListener('resize', setVh); }
 })();
 </script>
 
