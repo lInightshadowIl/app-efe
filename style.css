@@ -776,6 +776,15 @@ body {
     padding: 0;
     overflow: hidden;
     transition: bottom 0.25s ease;
+    touch-action: none;
+    overscroll-behavior: none;
+}
+
+/* Bloquea el scroll del body cuando el modal está abierto */
+body.modal-abierto {
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
 }
 
 .modal-overlay.visible {
