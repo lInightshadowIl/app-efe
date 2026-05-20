@@ -229,5 +229,28 @@
 
 </script>
 
+<script>
+// Bloquea el scroll del body cuando el modal de favoritos está abierto (especialmente con teclado iOS)
+(function() {
+    let scrollY = 0;
+    const modal = document.getElementById('modal-favorito');
+    if (!modal) return;
+
+    const observer = new MutationObserver(function() {
+        if (modal.classList.contains('visible')) {
+            scrollY = window.scrollY;
+            document.body.style.top = '-' + scrollY + 'px';
+            document.body.classList.add('modal-abierto');
+        } else {
+            document.body.classList.remove('modal-abierto');
+            document.body.style.top = '';
+            window.scrollTo(0, scrollY);
+        }
+    });
+
+    observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+})();
+</script>
+
 </body>
 </html>
