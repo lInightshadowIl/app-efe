@@ -239,15 +239,22 @@
     function fitOverlay() {
         if (window.visualViewport) {
             var vv = window.visualViewport;
-            // Posicionamos el overlay exactamente sobre el visual viewport.
-            // Esto evita problemas si Safari desplaza la vista más allá del layout viewport.
+            // Truco "Giant Overlay": Usamos un tamaño gigante para garantizar que el fondo oscuro
+            // siempre cubra toda la pantalla, sin importar los saltos que haga iOS Safari.
+            var overSize = 3000; 
             modal.style.position = 'fixed';
-            modal.style.top      = vv.offsetTop + 'px';
-            modal.style.left     = vv.offsetLeft + 'px';
-            modal.style.width    = vv.width + 'px';
-            modal.style.height   = vv.height + 'px';
-            modal.style.paddingTop = '0px';
-            modal.style.paddingBottom = '0px';
+            modal.style.top      = '-' + overSize + 'px';
+            modal.style.left     = '0px';
+            modal.style.width    = '100%';
+            modal.style.height   = (window.innerHeight + overSize * 2) + 'px';
+            
+            // Ajustamos el padding para que la caja del formulario (modal-box) quede 
+            // delimitada de forma matemáticamente exacta al visualViewport actual.
+            var paddingTop = overSize + vv.offsetTop;
+            var paddingBottom = Math.max(0, (window.innerHeight + overSize) - (vv.offsetTop + vv.height));
+            
+            modal.style.paddingTop = paddingTop + 'px';
+            modal.style.paddingBottom = paddingBottom + 'px';
         } else {
             var h = window.innerHeight;
             modal.style.position = 'fixed';
