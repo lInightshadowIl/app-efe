@@ -230,21 +230,59 @@
 </script>
 
 <script>
-// Bloquea el scroll del body cuando el modal de favoritos está abierto (especialmente con teclado iOS)
 (function() {
-    let scrollY = 0;
     const modal = document.getElementById('modal-favorito');
     if (!modal) return;
 
+    let scrollY = 0;
+
+    function applyViewport() {
+        if (!modal.classList.contains('visible')) return;
+        if (window.visualViewport) {
+            const vv = window.visualViewport;
+            // Posicionar y dimensionar el overlay exactamente sobre el visualViewport
+            modal.style.top    = vv.offsetTop + 'px';
+            modal.style.left   = vv.offsetLeft + 'px';
+            modal.style.width  = vv.width + 'px';
+            modal.style.height = vv.height + 'px';
+        } else {
+            modal.style.top    = '';
+            modal.style.left   = '';
+            modal.style.width  = '';
+            modal.style.height = '';
+        }
+    }
+
+    function onOpen() {
+        scrollY = window.scrollY;
+        document.body.style.top = '-' + scrollY + 'px';
+        document.body.classList.add('modal-abierto');
+        applyViewport();
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', applyViewport);
+            window.visualViewport.addEventListener('scroll', applyViewport);
+        }
+    }
+
+    function onClose() {
+        document.body.classList.remove('modal-abierto');
+        document.body.style.top = '';
+        window.scrollTo(0, scrollY);
+        modal.style.top    = '';
+        modal.style.left   = '';
+        modal.style.width  = '';
+        modal.style.height = '';
+        if (window.visualViewport) {
+            window.visualViewport.removeEventListener('resize', applyViewport);
+            window.visualViewport.removeEventListener('scroll', applyViewport);
+        }
+    }
+
     const observer = new MutationObserver(function() {
         if (modal.classList.contains('visible')) {
-            scrollY = window.scrollY;
-            document.body.style.top = '-' + scrollY + 'px';
-            document.body.classList.add('modal-abierto');
+            onOpen();
         } else {
-            document.body.classList.remove('modal-abierto');
-            document.body.style.top = '';
-            window.scrollTo(0, scrollY);
+            onClose();
         }
     });
 
