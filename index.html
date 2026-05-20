@@ -236,13 +236,37 @@
 </script>
 
 <script>
-// ISL: medir --isl-vh una sola vez en iOS para que el holder cubra el alto real
 (function () {
     var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
     function setVh() {
         document.documentElement.style.setProperty('--isl-vh', window.innerHeight * 0.01 + 'px');
     }
-    if (isIOS) { setVh(); window.addEventListener('resize', setVh); }
+
+    // Medir en carga y en resize
+    setVh();
+    window.addEventListener('resize', setVh);
+
+    // Re-medir también cada vez que el modal se abre,
+    // porque el teclado puede ya estar visible y haber achicado innerHeight
+    var modal = document.getElementById('modal-favorito');
+    if (!modal) return;
+
+    var observer = new MutationObserver(function () {
+        if (modal.classList.contains('visible')) {
+            // Pequeño delay para que el teclado ya haya ajustado innerHeight
+            requestAnimationFrame(function () {
+                setVh();
+                // Segunda medición por si el primer frame fue demasiado rápido
+                setTimeout(setVh, 100);
+            });
+        } else {
+            // Al cerrar restaurar el alto completo
+            setVh();
+        }
+    });
+
+    observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
 })();
 </script>
 
