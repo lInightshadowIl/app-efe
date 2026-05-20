@@ -764,23 +764,27 @@ body {
 }
 
 /* Modal de creación de ruta */
+/* ── ISL: ios-scroll-lock ─────────────────────────────────────────── */
+:root {
+    --isl-vh: 1vh; /* sobreescrito por JS en iOS con window.innerHeight*0.01 */
+    --isl-bg: rgba(0, 0, 0, 0.75);
+}
+
 .modal-overlay {
     display: none;
     position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.75);
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: min(calc(var(--isl-vh) * 100), 100%);
     z-index: 1000;
-    align-items: flex-end;
-    justify-content: center;
+    background-color: var(--isl-bg);
     backdrop-filter: blur(4px);
-    padding: 0;
-    overflow: hidden;
-    touch-action: none;
-    overscroll-behavior: none;
+    -webkit-backdrop-filter: blur(4px);
 }
 
 .modal-overlay.visible {
-    display: flex;
+    display: block;
     animation: fadeIn 0.2s ease;
 }
 
@@ -788,6 +792,45 @@ body {
     from { opacity: 0; }
     to   { opacity: 1; }
 }
+
+/* Capa scrolleable que "consume" el scroll de iOS sin propagarlo */
+.isl_scroller {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+.isl_scroller::-webkit-scrollbar { display: none; }
+
+/* +1px activa el rubber-scroll de iOS para que overscroll-behavior funcione */
+.isl_scroller_inner {
+    display: flex;
+    justify-content: flex-end;
+    align-items: stretch;
+    flex-direction: column;
+    height: calc(100% + 1px);
+    min-height: calc(100% + 1px);
+}
+
+/* sticky mantiene el modal-box pegado al fondo sin saltar 1px */
+.isl_scroller_content {
+    display: flex;
+    justify-content: flex-end;
+    align-items: stretch;
+    flex-direction: column;
+    position: sticky;
+    width: 100%;
+    height: calc(100% - 1px);
+    top: 0;
+    bottom: 0;
+}
+
+/* Cuando el teclado está visible, el overlay ya tiene el alto correcto por --isl-vh */
+/* ── fin ISL ─────────────────────────────────────────────────────── */
 
 .modal-box {
     background: var(--fondo-tarjeta);
@@ -797,21 +840,15 @@ body {
     max-width: 600px;
     animation: slideUp 0.25s ease;
     border-top: 3px solid var(--azul-efe);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    position: relative;
-    margin-top: auto;
-    max-height: 100%;
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    overflow: hidden;
     box-sizing: border-box;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
 }
 
 @keyframes slideUp {
     from { transform: translateY(40px); opacity: 0; }
-    to   { transform: translateY(0); opacity: 1; }
+    to   { transform: translateY(0);    opacity: 1; }
 }
-
-/* Cuando el teclado está visible, el JS ajusta el overlay vía visualViewport */
 
 .modal-titulo {
     font-size: 1.1rem;
