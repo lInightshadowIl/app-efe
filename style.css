@@ -805,6 +805,7 @@ body {
     max-height: 100%;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain; /* Evita el efecto gelatina/rebote en Android */
     display: flex;
     flex-direction: column;
 }
