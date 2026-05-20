@@ -236,54 +236,44 @@
 
     let scrollY = 0;
 
-    function applyViewport() {
+    function adjustHeight() {
         if (!modal.classList.contains('visible')) return;
-        if (window.visualViewport) {
-            const vv = window.visualViewport;
-            // Posicionar y dimensionar el overlay exactamente sobre el visualViewport
-            modal.style.top    = vv.offsetTop + 'px';
-            modal.style.left   = vv.offsetLeft + 'px';
-            modal.style.width  = vv.width + 'px';
-            modal.style.height = vv.height + 'px';
-        } else {
-            modal.style.top    = '';
-            modal.style.left   = '';
-            modal.style.width  = '';
-            modal.style.height = '';
-        }
+        const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+        modal.style.height = h + 'px';
     }
 
     function onOpen() {
-        scrollY = window.scrollY;
-        document.body.style.top = '-' + scrollY + 'px';
-        document.body.classList.add('modal-abierto');
-        applyViewport();
+        scrollY = window.scrollY || document.documentElement.scrollTop;
+        // Fijar el body en su posición actual para que no se pueda scrollear
+        document.body.style.top      = '-' + scrollY + 'px';
+        document.body.style.left     = '0';
+        document.body.style.right    = '0';
+        document.body.style.position = 'fixed';
+        document.body.style.overflow = 'hidden';
+        document.documentElement.style.overflow = 'hidden';
+        // Ajustar altura al viewport visible (encima del teclado)
+        adjustHeight();
         if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', applyViewport);
-            window.visualViewport.addEventListener('scroll', applyViewport);
+            window.visualViewport.addEventListener('resize', adjustHeight);
         }
     }
 
     function onClose() {
-        document.body.classList.remove('modal-abierto');
-        document.body.style.top = '';
-        window.scrollTo(0, scrollY);
-        modal.style.top    = '';
-        modal.style.left   = '';
-        modal.style.width  = '';
+        document.body.style.top      = '';
+        document.body.style.left     = '';
+        document.body.style.right    = '';
+        document.body.style.position = '';
+        document.body.style.overflow = '';
+        document.documentElement.style.overflow = '';
         modal.style.height = '';
         if (window.visualViewport) {
-            window.visualViewport.removeEventListener('resize', applyViewport);
-            window.visualViewport.removeEventListener('scroll', applyViewport);
+            window.visualViewport.removeEventListener('resize', adjustHeight);
         }
+        window.scrollTo(0, scrollY);
     }
 
     const observer = new MutationObserver(function() {
-        if (modal.classList.contains('visible')) {
-            onOpen();
-        } else {
-            onClose();
-        }
+        modal.classList.contains('visible') ? onOpen() : onClose();
     });
 
     observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
