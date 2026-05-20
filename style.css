@@ -775,9 +775,9 @@ body {
     backdrop-filter: blur(4px);
     padding: 0;
     overflow: hidden;
-    transition: bottom 0.25s ease;
     touch-action: none;
     overscroll-behavior: none;
+    /* iOS: el JS sobreescribirá top/left/width/height vía visualViewport */
 }
 
 /* Bloquea el scroll del body cuando el modal está abierto */
@@ -805,9 +805,11 @@ body.modal-abierto {
     max-width: 600px;
     animation: slideUp 0.25s ease;
     border-top: 3px solid var(--azul-efe);
-    overflow: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     position: relative;
     margin-top: auto;
+    max-height: 100%;
     padding-bottom: max(16px, env(safe-area-inset-bottom));
     box-sizing: border-box;
 }
@@ -817,29 +819,7 @@ body.modal-abierto {
     to   { transform: translateY(0); opacity: 1; }
 }
 
-/* Cuando el teclado está visible, reducir tamaño del modal */
-@media screen and (max-height: 500px) {
-    .modal-box {
-        max-height: 100vh;
-        padding: 14px 16px 8px;
-        border-radius: 12px 12px 0 0;
-    }
-    .modal-titulo {
-        font-size: 0.95rem;
-        margin-bottom: 10px;
-    }
-    .modal-campo {
-        margin-bottom: 8px;
-    }
-    .modal-campo input,
-    .modal-campo select {
-        padding: 9px 12px;
-        font-size: 0.9rem;
-    }
-    .modal-botones {
-        margin-top: 10px;
-    }
-}
+/* Cuando el teclado está visible, el JS ajusta el overlay vía visualViewport */
 
 .modal-titulo {
     font-size: 1.1rem;
