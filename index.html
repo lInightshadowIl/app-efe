@@ -237,23 +237,21 @@
     var scrollPosition = 0;
 
     function fitOverlay() {
-        var layoutHeight = window.innerHeight;
         if (window.visualViewport) {
             var vv = window.visualViewport;
-            // El overlay siempre cubre el 100% del viewport de diseño
+            // Posicionamos el overlay exactamente sobre el visual viewport.
+            // Esto evita problemas si Safari desplaza la vista más allá del layout viewport.
             modal.style.position = 'fixed';
-            modal.style.top      = '0px';
-            modal.style.left     = '0px';
-            modal.style.width    = '100%';
-            modal.style.height   = layoutHeight + 'px';
-            
-            // Empujamos el contenido interno (modal-box) para que coincida con el visual viewport
-            // y no sea tapado por el teclado
-            modal.style.paddingTop = vv.offsetTop + 'px';
-            modal.style.paddingBottom = Math.max(0, layoutHeight - (vv.height + vv.offsetTop)) + 'px';
+            modal.style.top      = vv.offsetTop + 'px';
+            modal.style.left     = vv.offsetLeft + 'px';
+            modal.style.width    = vv.width + 'px';
+            modal.style.height   = vv.height + 'px';
+            modal.style.paddingTop = '0px';
+            modal.style.paddingBottom = '0px';
         } else {
+            var h = window.innerHeight;
             modal.style.position = 'fixed';
-            modal.style.height   = layoutHeight + 'px';
+            modal.style.height   = h + 'px';
             modal.style.top      = '0px';
             modal.style.bottom   = 'auto';
             modal.style.paddingTop = '0px';
