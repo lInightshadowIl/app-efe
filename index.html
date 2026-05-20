@@ -149,31 +149,25 @@
 
 <!-- Modal Crear / Editar Ruta Favorita -->
 <div class="modal-overlay" id="modal-favorito" data-modo="crear">
-    <div class="isl_scroller">
-        <div class="isl_scroller_inner">
-            <div class="isl_scroller_content">
-                <div class="modal-box">
-                    <div class="modal-titulo">⭐ <span id="modal-titulo-txt">Nueva Ruta Favorita</span></div>
+    <div class="modal-box">
+        <div class="modal-titulo">⭐ <span id="modal-titulo-txt">Nueva Ruta Favorita</span></div>
 
-                    <div class="modal-campo">
-                        <label>Nombre de la ruta</label>
-                        <input type="text" id="fav-nombre" placeholder="Ej: Trabajo, Casa, Universidad…" maxlength="30">
-                    </div>
-                    <div class="modal-campo">
-                        <label>Origen</label>
-                        <select id="fav-origen"></select>
-                    </div>
-                    <div class="modal-campo">
-                        <label>Destino</label>
-                        <select id="fav-destino"></select>
-                    </div>
+        <div class="modal-campo">
+            <label>Nombre de la ruta</label>
+            <input type="text" id="fav-nombre" placeholder="Ej: Trabajo, Casa, Universidad…" maxlength="30">
+        </div>
+        <div class="modal-campo">
+            <label>Origen</label>
+            <select id="fav-origen"></select>
+        </div>
+        <div class="modal-campo">
+            <label>Destino</label>
+            <select id="fav-destino"></select>
+        </div>
 
-                    <div class="modal-botones">
-                        <button class="btn-modal-cancelar" id="btn-modal-cancelar">Cancelar</button>
-                        <button class="btn-modal-guardar"  id="btn-modal-guardar">⭐ Guardar ruta</button>
-                    </div>
-                </div>
-            </div>
+        <div class="modal-botones">
+            <button class="btn-modal-cancelar" id="btn-modal-cancelar">Cancelar</button>
+            <button class="btn-modal-guardar"  id="btn-modal-guardar">⭐ Guardar ruta</button>
         </div>
     </div>
 </div>
@@ -237,32 +231,24 @@
 
 <script>
 (function () {
-    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-    function setVh() {
-        document.documentElement.style.setProperty('--isl-vh', window.innerHeight * 0.01 + 'px');
-    }
-
-    // Medir en carga y en resize
-    setVh();
-    window.addEventListener('resize', setVh);
-
-    // Re-medir también cada vez que el modal se abre,
-    // porque el teclado puede ya estar visible y haber achicado innerHeight
     var modal = document.getElementById('modal-favorito');
     if (!modal) return;
 
+    // En iOS, la única forma garantizada de bloquear el scroll de fondo
+    // detrás de un overlay es preventDefault en touchmove sobre el overlay.
+    // Se usa { passive: false } para que preventDefault sea permitido.
+    function blockScroll(e) {
+        // Permitir scroll solo si el touch ocurre DENTRO del modal-box
+        var box = modal.querySelector('.modal-box');
+        if (box && box.contains(e.target)) return;
+        e.preventDefault();
+    }
+
     var observer = new MutationObserver(function () {
         if (modal.classList.contains('visible')) {
-            // Pequeño delay para que el teclado ya haya ajustado innerHeight
-            requestAnimationFrame(function () {
-                setVh();
-                // Segunda medición por si el primer frame fue demasiado rápido
-                setTimeout(setVh, 100);
-            });
+            modal.addEventListener('touchmove', blockScroll, { passive: false });
         } else {
-            // Al cerrar restaurar el alto completo
-            setVh();
+            modal.removeEventListener('touchmove', blockScroll);
         }
     });
 
