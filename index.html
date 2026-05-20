@@ -234,37 +234,78 @@
     var modal = document.getElementById('modal-favorito');
     if (!modal) return;
 
-    // En PWA iOS, position:fixed usa el viewport completo (incluyendo zona del teclado).
-    // window.innerHeight sí refleja el espacio visible real.
-    // Forzamos el overlay a esa altura y lo anclamos desde abajo.
+    var scrollPosition = 0;
+
     function fitOverlay() {
-        var h = window.innerHeight;
-        modal.style.height  = h + 'px';
-        modal.style.top     = '0px';
-        modal.style.bottom  = 'auto';
+        if (window.visualViewport) {
+            var vv = window.visualViewport;
+            modal.style.position = 'fixed';
+            modal.style.top      = vv.offsetTop + 'px';
+            modal.style.left     = vv.offsetLeft + 'px';
+            modal.style.width    = vv.width + 'px';
+            modal.style.height   = vv.height + 'px';
+        } else {
+            var h = window.innerHeight;
+            modal.style.position = 'fixed';
+            modal.style.height   = h + 'px';
+            modal.style.top      = '0px';
+            modal.style.bottom   = 'auto';
+        }
     }
 
     function resetOverlay() {
-        modal.style.height  = '';
-        modal.style.top     = '';
-        modal.style.bottom  = '';
+        modal.style.position = '';
+        modal.style.height   = '';
+        modal.style.top      = '';
+        modal.style.left     = '';
+        modal.style.width    = '';
+        modal.style.bottom   = '';
     }
 
-    // Bloquear touchmove en el fondo del overlay (no en el modal-box)
     function blockScroll(e) {
         var box = modal.querySelector('.modal-box');
-        if (box && box.contains(e.target)) return;
+        if (box && box.contains(e.target)) {
+            if (box.scrollHeight > box.clientHeight) {
+                return; // Permitir scroll interno en el modal
+            }
+        }
         e.preventDefault();
     }
 
     var observer = new MutationObserver(function () {
         if (modal.classList.contains('visible')) {
+            // Guardar posición de scroll y fijar body
+            scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+            document.body.style.position = 'fixed';
+            document.body.style.top = '-' + scrollPosition + 'px';
+            document.body.style.width = '100%';
+            document.body.style.overflow = 'hidden';
+
             fitOverlay();
-            window.addEventListener('resize', fitOverlay);
+            
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', fitOverlay);
+                window.visualViewport.addEventListener('scroll', fitOverlay);
+            } else {
+                window.addEventListener('resize', fitOverlay);
+            }
             modal.addEventListener('touchmove', blockScroll, { passive: false });
         } else {
+            // Restaurar scroll de body
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            document.body.style.overflow = '';
+            window.scrollTo(0, scrollPosition);
+
             resetOverlay();
-            window.removeEventListener('resize', fitOverlay);
+            
+            if (window.visualViewport) {
+                window.visualViewport.removeEventListener('resize', fitOverlay);
+                window.visualViewport.removeEventListener('scroll', fitOverlay);
+            } else {
+                window.removeEventListener('resize', fitOverlay);
+            }
             modal.removeEventListener('touchmove', blockScroll);
         }
     });
