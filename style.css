@@ -767,7 +767,10 @@ body {
 .modal-overlay {
     display: none;
     position: fixed;
-    inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background: rgba(0, 0, 0, 0.75);
     z-index: 1000;
     align-items: flex-end;
@@ -777,14 +780,6 @@ body {
     overflow: hidden;
     touch-action: none;
     overscroll-behavior: none;
-    /* iOS: el JS sobreescribirá top/left/width/height vía visualViewport */
-}
-
-/* Bloquea el scroll del body cuando el modal está abierto */
-body.modal-abierto {
-    overflow: hidden;
-    position: fixed;
-    width: 100%;
 }
 
 .modal-overlay.visible {
