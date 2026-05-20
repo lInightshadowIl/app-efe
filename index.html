@@ -232,29 +232,28 @@
 <script>
 (function() {
     const modal = document.getElementById('modal-favorito');
-    if (!modal) return;
+    const box   = modal ? modal.querySelector('.modal-box') : null;
+    if (!modal || !box) return;
 
     let scrollY = 0;
 
-    function adjustHeight() {
+    function adjustBox() {
         if (!modal.classList.contains('visible')) return;
         const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-        modal.style.height = h + 'px';
+        box.style.maxHeight = (h * 0.92) + 'px';
     }
 
     function onOpen() {
         scrollY = window.scrollY || document.documentElement.scrollTop;
-        // Fijar el body en su posición actual para que no se pueda scrollear
         document.body.style.top      = '-' + scrollY + 'px';
         document.body.style.left     = '0';
         document.body.style.right    = '0';
         document.body.style.position = 'fixed';
         document.body.style.overflow = 'hidden';
         document.documentElement.style.overflow = 'hidden';
-        // Ajustar altura al viewport visible (encima del teclado)
-        adjustHeight();
+        adjustBox();
         if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', adjustHeight);
+            window.visualViewport.addEventListener('resize', adjustBox);
         }
     }
 
@@ -265,9 +264,9 @@
         document.body.style.position = '';
         document.body.style.overflow = '';
         document.documentElement.style.overflow = '';
-        modal.style.height = '';
+        box.style.maxHeight = '';
         if (window.visualViewport) {
-            window.visualViewport.removeEventListener('resize', adjustHeight);
+            window.visualViewport.removeEventListener('resize', adjustBox);
         }
         window.scrollTo(0, scrollY);
     }
