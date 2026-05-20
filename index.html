@@ -234,11 +234,24 @@
     var modal = document.getElementById('modal-favorito');
     if (!modal) return;
 
-    // En iOS, la única forma garantizada de bloquear el scroll de fondo
-    // detrás de un overlay es preventDefault en touchmove sobre el overlay.
-    // Se usa { passive: false } para que preventDefault sea permitido.
+    // En PWA iOS, position:fixed usa el viewport completo (incluyendo zona del teclado).
+    // window.innerHeight sí refleja el espacio visible real.
+    // Forzamos el overlay a esa altura y lo anclamos desde abajo.
+    function fitOverlay() {
+        var h = window.innerHeight;
+        modal.style.height  = h + 'px';
+        modal.style.top     = '0px';
+        modal.style.bottom  = 'auto';
+    }
+
+    function resetOverlay() {
+        modal.style.height  = '';
+        modal.style.top     = '';
+        modal.style.bottom  = '';
+    }
+
+    // Bloquear touchmove en el fondo del overlay (no en el modal-box)
     function blockScroll(e) {
-        // Permitir scroll solo si el touch ocurre DENTRO del modal-box
         var box = modal.querySelector('.modal-box');
         if (box && box.contains(e.target)) return;
         e.preventDefault();
@@ -246,8 +259,12 @@
 
     var observer = new MutationObserver(function () {
         if (modal.classList.contains('visible')) {
+            fitOverlay();
+            window.addEventListener('resize', fitOverlay);
             modal.addEventListener('touchmove', blockScroll, { passive: false });
         } else {
+            resetOverlay();
+            window.removeEventListener('resize', fitOverlay);
             modal.removeEventListener('touchmove', blockScroll);
         }
     });
