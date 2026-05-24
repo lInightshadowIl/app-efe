@@ -1,11 +1,11 @@
 {
-  "ultima_update": "17-05-2026, 12:43:10",
+  "ultima_update": "24-05-2026, 12:50:06",
   "fechas_scrapeadas": {
-    "viernes": "2026-05-22",
-    "sabado": "2026-05-23",
-    "domingo": "2026-05-24",
+    "viernes": "2026-05-29",
+    "sabado": "2026-05-30",
+    "domingo": "2026-05-31",
     "laboral_referencia": {
-      "fecha": "2026-05-22",
+      "fecha": "2026-05-29",
       "dia": "Viernes"
     }
   },
@@ -141,14 +141,7 @@
       "tipo": "civil"
     }
   ],
-  "feriados_semana": [
-    {
-      "fecha": "2026-05-21",
-      "dia": "Jueves",
-      "nombre": "Día de las Glorias Navales",
-      "tipo": "civil"
-    }
-  ],
+  "feriados_semana": [],
   "advertencias": [],
   "rutas": {
     "11-12": {
