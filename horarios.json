@@ -1,11 +1,11 @@
 {
-  "ultima_update": "07-06-2026, 13:02:51",
+  "ultima_update": "14-06-2026, 13:06:21",
   "fechas_scrapeadas": {
-    "viernes": "2026-06-12",
-    "sabado": "2026-06-13",
-    "domingo": "2026-06-14",
+    "viernes": "2026-06-19",
+    "sabado": "2026-06-20",
+    "domingo": "2026-06-21",
     "laboral_referencia": {
-      "fecha": "2026-06-12",
+      "fecha": "2026-06-19",
       "dia": "Viernes"
     }
   },
@@ -141,7 +141,14 @@
       "tipo": "civil"
     }
   ],
-  "feriados_semana": [],
+  "feriados_semana": [
+    {
+      "fecha": "2026-06-21",
+      "dia": "Domingo",
+      "nombre": "Día Nacional de los Pueblos Indígenas",
+      "tipo": "civil"
+    }
+  ],
   "advertencias": [],
   "rutas": {
     "11-12": {
