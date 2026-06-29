@@ -24,7 +24,7 @@
 <link rel="apple-touch-icon" sizes="72x72" href="icons/icon-72x72.png">
 <link rel="apple-touch-icon" sizes="60x60" href="icons/icon-60x60.png">
 <link rel="apple-touch-icon" sizes="57x57" href="icons/icon-57x57.png">
-<link rel="apple-touch-icon" href="https://www.efe.cl/wp-content/themes/efe/assets/img/logo-efe.png">
+<link rel="apple-touch-icon" href="icons/icon-180x180.png">
 
 <!--
     CSS CRÍTICO INLINE
@@ -172,6 +172,18 @@
     </div>
 </div>
 
+<!-- Banner de actualización de PWA -->
+<div id="pwa-update-banner" class="pwa-update-banner hidden">
+    <div class="pwa-update-content">
+        <span class="pwa-update-icon">✨</span>
+        <span class="pwa-update-text">Hay una nueva versión disponible. ¿Deseas reiniciar ahora?</span>
+    </div>
+    <div class="pwa-update-actions">
+        <button id="pwa-update-btn-yes" class="pwa-btn-primary">Sí, reiniciar</button>
+        <button id="pwa-update-btn-no" class="pwa-btn-secondary">Más tarde</button>
+    </div>
+</div>
+
 <script src="estaciones.js"></script>
 <script src="app.js"></script>
 
@@ -198,35 +210,79 @@
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/service-worker.js')
                 .then(registration => {
+                    // 1. Verificar si ya hay un service worker en espera (waiting)
+                    if (registration.waiting) {
+                        showUpdateBanner(registration.waiting);
+                    }
+
+                    // 2. Verificar si hay un service worker instalándose
+                    if (registration.installing) {
+                        trackInstallingWorker(registration.installing);
+                    }
+
+                    // 3. Escuchar cuando se encuentra una actualización
+                    registration.addEventListener('updatefound', () => {
+                        trackInstallingWorker(registration.installing);
+                    });
 
                     // Verifica actualizaciones cada hora
                     setInterval(() => {
                         registration.update();
                     }, 60 * 60 * 1000);
-
-                    registration.addEventListener('updatefound', () => {
-                        const newWorker = registration.installing;
-
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // SW nuevo listo → recargar automáticamente
-                                console.log('✨ Nueva versión disponible, recargando...');
-                                // window.location.reload();
-                            }
-                        });
-                    });
-
                 })
                 .catch(error => {
                     console.error('❌ Error al registrar Service Worker:', error);
                 });
-        });
 
-    } else {
-        console.warn('⚠️ Service Workers no soportados');
+            // Recargar la página cuando el nuevo service worker tome el control
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) {
+                    refreshing = true;
+                    window.location.reload();
+                }
+            });
+        });
     }
 
+    function trackInstallingWorker(worker) {
+        if (!worker) return;
+        worker.addEventListener('statechange', () => {
+            if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+                showUpdateBanner(worker);
+            }
+        });
+    }
 
+    function showUpdateBanner(worker) {
+        // Si el usuario ya rechazó la actualización en esta sesión, no molestar
+        if (sessionStorage.getItem('pwa-update-dismissed') === 'true') {
+            return;
+        }
+
+        const banner = document.getElementById('pwa-update-banner');
+        const btnYes = document.getElementById('pwa-update-btn-yes');
+        const btnNo = document.getElementById('pwa-update-btn-no');
+        if (!banner || !btnYes || !btnNo) return;
+        
+        banner.classList.remove('hidden');
+        
+        // Clonar y reemplazar los botones para evitar duplicidad de listeners
+        const newBtnYes = btnYes.cloneNode(true);
+        const newBtnNo = btnNo.cloneNode(true);
+        btnYes.parentNode.replaceChild(newBtnYes, btnYes);
+        btnNo.parentNode.replaceChild(newBtnNo, btnNo);
+
+        newBtnYes.addEventListener('click', () => {
+            worker.postMessage({ type: 'SKIP_WAITING' });
+            banner.classList.add('hidden');
+        });
+        
+        newBtnNo.addEventListener('click', () => {
+            sessionStorage.setItem('pwa-update-dismissed', 'true');
+            banner.classList.add('hidden');
+        });
+    }
 </script>
 
 <script>
