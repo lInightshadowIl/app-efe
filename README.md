@@ -5,11 +5,11 @@
 ![Biotren](https://img.shields.io/badge/Biotren-Concepción-red?style=for-the-badge)
 ![PWA](https://img.shields.io/badge/PWA-Ready-blue?style=for-the-badge)
 ![Offline](https://img.shields.io/badge/Offline-First-green?style=for-the-badge)
-![License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
+![Vercel](https://img.shields.io/badge/Vercel-Deployed-black?style=for-the-badge)
 
-**Consulta los horarios del Biotren de Concepción de forma rápida, sin conexión y con tus rutas favoritas.**
+**Consulta los horarios del Biotren de Concepción de forma rápida, sin conexión y con confirmación inteligente de actualizaciones.**
 
-[🚀 Demo](#) • [📱 Instalar](#instalación) • [🛠️ Desarrollo](#desarrollo)
+[📱 Instalar](#-instalación) • [🛠️ Arquitectura de Actualización](#-arquitectura-de-actualización) • [💻 Desarrollo](#-desarrollo-local)
 
 </div>
 
@@ -18,230 +18,100 @@
 ## ✨ Características
 
 ### 🌟 Funcionalidades Principales
+- **📍 Rutas Favoritas**: Guarda tus tramos más frecuentes para consultarlos al instante.
+- **📶 Diseño Offline-First**: Acceso completo a los horarios sin conexión a internet.
+- **⚡ Tiempo Real**: Consulta automática de los próximos trenes según la hora actual.
+- **📅 Detección de Feriados**: Notifica si mañana o hoy es feriado en Chile (el servicio no opera).
+- **🔀 Combinación Automática**: Calcula rutas complejas que requieren trasbordo en la estación Concepción (Línea 1 <-> Línea 2).
 
-- **📍 Rutas Favoritas**: Guarda tus rutas más frecuentes y consúltalas con un solo toque
-- **📶 Funciona Offline**: Toda la información disponible sin conexión a internet
-- **⚡ Tiempo Real**: Consulta horarios basados en la hora actual
-- **🔄 Actualizaciones Automáticas**: La app se actualiza automáticamente cuando hay nuevos horarios
-- **📅 Detecta Feriados**: Te avisa cuando el Biotren no opera por feriados
-- **🔀 Rutas con Combinación**: Encuentra automáticamente rutas que requieren hacer combinación en Concepción
-
-### 🎨 Experiencia de Usuario
-
-- ✅ Diseño oscuro moderno y elegante
-- ✅ Responsive - funciona en móviles, tablets y desktop
-- ✅ PWA instalable como app nativa
-- ✅ Interfaz intuitiva y rápida
-- ✅ Scroll infinito en resultados de favoritos
-- ✅ Modal adaptable al teclado en dispositivos móviles
+### 🎨 Experiencia PWA Premium
+- Interfaz moderna en modo oscuro con bordes suaves y efectos translúcidos (*glassmorphism*).
+- Altamente adaptable a pantallas móviles y tablets.
+- **Safe Area Support**: Respeto total de la zona segura y el indicador de inicio en dispositivos iOS (iPhone).
+- **Control de Actualizaciones**: Banner interactivo no intrusivo para decidir cuándo aplicar mejoras de código.
 
 ---
 
-## 🚀 Uso Rápido
-
-### 📱 Consulta Manual
-
-1. Selecciona **cuándo viajas** (Hoy, Lunes-Viernes, Sábado, Domingo/Feriado)
-2. Elige tu **estación de origen**
-3. Elige tu **estación de destino**
-4. Presiona **"Consultar Horarios"**
-
-### ⭐ Rutas Favoritas
-
-1. Toca **"+ Nueva ruta"**
-2. Dale un nombre (ej: "Trabajo", "Casa", "Universidad")
-3. Selecciona origen y destino
-4. Guarda y ¡listo! Ahora puedes consultar con un toque en **"Consultar"**
-
----
-
-## 📦 Instalación
+## 📱 Instalación
 
 ### Como PWA (Recomendado)
 
-#### En iOS (iPhone/iPad):
-1. Abre la app en Safari
-2. Toca el botón **Compartir** (⬆️)
-3. Selecciona **"Añadir a pantalla de inicio"**
-4. ¡Listo! Ahora tienes la app instalada
+#### En iOS (iPhone / iPad)
+1. Abre la aplicación en **Safari**.
+2. Presiona el botón **Compartir** (⬆️).
+3. Selecciona **"Añadir a pantalla de inicio"**.
 
-#### En Android:
-1. Abre la app en Chrome
-2. Toca el menú (⋮)
-3. Selecciona **"Instalar aplicación"** o **"Añadir a pantalla de inicio"**
-4. ¡Listo!
-
-### Desarrollo Local
-
-```bash
-# Clona el repositorio
-git clone https://github.com/tu-usuario/biotren-app.git
-
-# Entra al directorio
-cd biotren-app
-
-# Abre con Live Server o cualquier servidor local
-# No requiere instalación de dependencias
-```
+#### En Android
+1. Abre la aplicación en **Google Chrome**.
+2. Toca el menú de tres puntos (⋮).
+3. Selecciona **"Instalar aplicación"** o **"Añadir a pantalla de inicio"**.
 
 ---
 
-## 🛠️ Tecnologías
+## 🔄 Arquitectura de Actualización
 
-| Tecnología | Uso |
-|------------|-----|
-| **HTML5** | Estructura semántica |
-| **CSS3** | Diseño responsive con variables CSS |
-| **JavaScript (Vanilla)** | Lógica de la aplicación |
-| **Service Worker** | Caché offline y actualizaciones |
-| **LocalStorage** | Persistencia de datos y favoritos |
-| **PWA** | Instalación como app nativa |
+Para optimizar el rendimiento y ahorrar datos móviles, la aplicación separa de manera estricta la actualización de **datos** (horarios) de la actualización de **código** (diseño/funcionalidades).
+
+```mermaid
+graph TD
+    A[Inicio de la App] --> B{¿Hay Internet?}
+    B -- Sí --> C[Comprobar version.json]
+    B -- No --> D[Usar caché local de inmediato]
+    
+    C --> E{¿Fecha diferente a LocalStorage?}
+    E -- Sí --> F[Descargar horarios.json en background]
+    E -- No --> G[Mantener horarios actuales]
+    
+    F --> H[Actualizar LocalStorage silenciosamente]
+    G --> I[App Lista para usar]
+    H --> I
+    
+    A --> J[Navegador busca service-worker.js]
+    J --> K{¿Nueva CACHE_VERSION?}
+    K -- Sí --> L[Descargar nuevo código en background]
+    L --> M[Mostrar Banner: ¿Deseas reiniciar?]
+    M -- Sí --> N[Activar nuevo SW y Recargar App]
+    M -- No --> O[Posponer para el próximo inicio]
+```
+
+### 1. Actualización de Horarios (Datos)
+* **Archivos involucrados:** `version.json` (50 B) y `horarios.json` (3.4 MB).
+* **Frecuencia:** Cada vez que el scraper semanal en GitHub Actions detecta cambios y realiza un despliegue.
+* **Flujo:** `app.js` descarga `version.json` en segundo plano, compara la fecha con la local, y si hay cambios, descarga `horarios.json` actualizando el `LocalStorage` **silenciosamente sin necesidad de reiniciar la app**.
+
+### 2. Actualización de la App (Código)
+* **Archivos involucrados:** `index.html`, `style.css`, `app.js`, `service-worker.js`, etc.
+* **Frecuencia:** Solo cuando se modifica el código fuente de la aplicación.
+* **Flujo:** El navegador detecta una nueva versión de `service-worker.js` (cambio en `CACHE_VERSION`). Al finalizar la descarga de los nuevos archivos en segundo plano, se muestra un banner consultando al usuario: **"Hay una nueva versión disponible. ¿Deseas reiniciar ahora?"**.
+  * **Sí, reiniciar:** Aplica los cambios inmediatamente recargando la página.
+  * **Más tarde:** Oculta el banner y los aplica de forma transparente la próxima vez que se abra la app.
+
+---
+
+## 💻 Desarrollo Local
+
+Para realizar pruebas locales de la PWA y su Service Worker, clona el proyecto y levanta un servidor HTTP local (los Service Workers requieren HTTPS o `localhost`/`127.0.0.1` para registrarse):
+
+```bash
+# Servir usando python
+python -m http.server 8080
+
+# O usando Node.js (http-server)
+npx http-server -p 8080
+```
+
+### Forzar simulación de actualización PWA
+1. Modifica algún estilo en `style.css` o añade un cambio en `index.html`.
+2. Incrementa la constante `CACHE_VERSION` en [service-worker.js](file:///c:/Users/night-ghost/Desktop/awds/app-efe-main/service-worker.js) (ej. de `"biotren-v3.4.6"` a `"biotren-v3.4.7"`).
+3. Recarga la página en tu navegador y verás aparecer el banner de actualización.
 
 ---
 
 ## 📂 Estructura del Proyecto
 
-```
-biotren-app/
-│
-├── index.html              # Página principal
-├── style.css              # Estilos de la aplicación
-├── app.js                 # Lógica principal
-├── estaciones.js          # Datos de las estaciones
-├── horarios.json          # Base de datos de horarios
-├── service-worker.js      # Service Worker para PWA
-├── manifest.json          # Manifiesto PWA
-│
-└── icons/                 # Iconos de la aplicación
-    ├── icon-192x192.png
-    ├── icon-512x512.png
-    └── ...
-```
-
----
-
-## 🎯 Características Técnicas
-
-### Offline-First
-- Toda la app funciona sin conexión
-- Service Worker cachea todos los recursos
-- Datos almacenados en LocalStorage
-- Actualizaciones automáticas cuando hay conexión
-
-### Optimizaciones Móviles
-- Modal adaptable al teclado virtual
-- Scroll táctil optimizado
-- Media queries para diferentes dispositivos
-- Viewport configurado para mejor experiencia
-
-### Gestión de Datos
-- Detección automática de actualizaciones
-- Sistema de versionado de horarios
-- Caché inteligente
-- Manejo de feriados chilenos
-
----
-
-## 🔧 Desarrollo
-
-### Actualizar Horarios
-
-Edita el archivo `horarios.json`:
-
-```json
-{
-  "ultima_update": "2025-02-17",
-  "rutas": {
-    "16-35": {
-      "laboral": [
-        {"s": "06:00", "ll": "06:45", "d": "45min", "v": 880}
-      ]
-    }
-  },
-  "feriados": ["2025-05-01", "2025-09-18"],
-  "feriados_info": [
-    {"fecha": "2025-05-01", "nombre": "Día del Trabajo"}
-  ]
-}
-```
-
-### Service Worker
-
-El Service Worker se actualiza automáticamente:
-- Verifica nuevas versiones cada hora
-- Actualiza en segundo plano
-- Recarga la página cuando hay nueva versión
-
----
-
-## 🌐 Líneas Disponibles
-
-### Línea 1
-Alameda - Concepción - Hualqui - Chiguayante
-
-### Línea 2
-Concepción - Talcahuano - Coronel - Lota - Laraquete
-
----
-
-## 📊 Horarios Disponibles
-
-- 🕐 **Lunes a Viernes**: Horario laboral completo
-- 🕑 **Sábados**: Horario reducido
-- 🕒 **Domingos y Feriados**: Servicio no disponible
-
----
-
-## 🤝 Contribuir
-
-¿Encontraste un bug o tienes una idea?
-
-1. Fork el proyecto
-2. Crea una rama (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
-
----
-
-## 📝 Roadmap
-
-- [ ] Notificaciones push para próximos trenes
-- [ ] Historial de viajes
-- [ ] Compartir rutas con amigos
-- [ ] Widget de pantalla de inicio
-- [ ] Modo oscuro/claro
-- [ ] Integración con mapas
-
----
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
-
----
-
-## 👨‍💻 Autor
-
-**Tu Nombre**
-
-- GitHub: [@tu-usuario](https://github.com/tu-usuario)
-- Twitter: [@tu-usuario](https://twitter.com/tu-usuario)
-
----
-
-## 🙏 Agradecimientos
-
-- Datos de horarios provistos por EFE (Empresa de los Ferrocarriles del Estado)
-- Iconos de [Lucide Icons](https://lucide.dev/)
-- Inspiración de la comunidad de Concepción
-
----
-
-<div align="center">
-
-**¿Te gusta el proyecto? ¡Dale una ⭐ en GitHub!**
-
-Hecho con ❤️ para la comunidad de Concepción
-
-</div>
+* **[index.html](file:///c:/Users/night-ghost/Desktop/awds/app-efe-main/index.html)**: Estructura de la aplicación, CSS crítico inline y lógica de registro del Service Worker.
+* **[style.css](file:///c:/Users/night-ghost/Desktop/awds/app-efe-main/style.css)**: Estilos responsivos de la interfaz y transiciones del banner de actualización.
+* **[app.js](file:///c:/Users/night-ghost/Desktop/awds/app-efe-main/app.js)**: Lógica de negocio (búsqueda de horarios, combinaciones, favoritos y sincronización de datos).
+* **[service-worker.js](file:///c:/Users/night-ghost/Desktop/awds/app-efe-main/service-worker.js)**: Estrategias de almacenamiento en caché offline (`stale-while-revalidate` y `network-first`).
+* **[estaciones.js](file:///c:/Users/night-ghost/Desktop/awds/app-efe-main/estaciones.js)**: Listado de estaciones y líneas del Biotren.
+* **[manifest.json](file:///c:/Users/night-ghost/Desktop/awds/app-efe-main/manifest.json)**: Configuración de la PWA para su instalación en dispositivos móviles.
