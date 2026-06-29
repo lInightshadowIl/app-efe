@@ -23,7 +23,7 @@ function _addHeader(request) {
   return request;
 }
 
-const CACHE_VERSION = "biotren-v3.4.7";
+const CACHE_VERSION = "biotren-v3.4.8";
 const ASSETS_OFFLINE = [
   "/",
   "/index.html",
