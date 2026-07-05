@@ -1,11 +1,11 @@
 {
-  "ultima_update": "28-06-2026, 12:56:10",
+  "ultima_update": "05-07-2026, 12:52:22",
   "fechas_scrapeadas": {
-    "viernes": "2026-07-03",
-    "sabado": "2026-07-04",
-    "domingo": "2026-07-05",
+    "viernes": "2026-07-10",
+    "sabado": "2026-07-11",
+    "domingo": "2026-07-12",
     "laboral_referencia": {
-      "fecha": "2026-07-03",
+      "fecha": "2026-07-10",
       "dia": "Viernes"
     }
   },
@@ -141,14 +141,7 @@
       "tipo": "civil"
     }
   ],
-  "feriados_semana": [
-    {
-      "fecha": "2026-06-29",
-      "dia": "Lunes",
-      "nombre": "San Pedro y San Pablo",
-      "tipo": "religioso"
-    }
-  ],
+  "feriados_semana": [],
   "advertencias": [],
   "rutas": {
     "11-12": {
