@@ -1,11 +1,11 @@
 {
-  "ultima_update": "12-07-2026, 12:42:45",
+  "ultima_update": "19-07-2026, 12:42:04",
   "fechas_scrapeadas": {
-    "viernes": "2026-07-17",
-    "sabado": "2026-07-18",
-    "domingo": "2026-07-19",
+    "viernes": "2026-07-24",
+    "sabado": "2026-07-25",
+    "domingo": "2026-07-26",
     "laboral_referencia": {
-      "fecha": "2026-07-17",
+      "fecha": "2026-07-24",
       "dia": "Viernes"
     }
   },
@@ -141,14 +141,7 @@
       "tipo": "civil"
     }
   ],
-  "feriados_semana": [
-    {
-      "fecha": "2026-07-16",
-      "dia": "Jueves",
-      "nombre": "Día de la Virgen del Carmen",
-      "tipo": "religioso"
-    }
-  ],
+  "feriados_semana": [],
   "advertencias": [],
   "rutas": {
     "11-12": {
