@@ -185,11 +185,18 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.DIST_REPO_TOKEN }}
         run: |
+          # OJO: ordenamos por el número de build extraído del propio tag
+          # (ej. "efe-v1.0.42" -> 42), NO por "created_at" del release.
+          # El campo created_at de la API de Releases resultó no ser
+          # confiable para ordenar aquí y estaba borrando los releases
+          # MÁS NUEVOS en vez de los más viejos. El número de run_number
+          # que nosotros mismos generamos es monótono y confiable.
           gh api "repos/${{ env.DIST_REPO }}/releases" --paginate | jq -r \
             --arg p "${{ env.TAG_PREFIX }}" \
             --argjson keep ${{ env.KEEP_RELEASES }} '
             [.[] | select(.tag_name | startswith($p))]
-            | sort_by(.created_at) | reverse
+            | map(. + {_build: (.tag_name | ltrimstr($p) | split(".") | last | tonumber)})
+            | sort_by(._build) | reverse
             | .[$keep:]
             | .[] | "\(.id) \(.tag_name)"
           ' | while read -r id tag; do
