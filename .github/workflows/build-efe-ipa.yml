@@ -11,6 +11,14 @@ on:
 permissions:
   contents: read
 
+# Evita que dos runs (de este workflow u otros que tocan el mismo
+# repo de distribución) empujen a testIpa al mismo tiempo.
+# IMPORTANTE: usa este MISMO group name en build-ipa.yml y en cualquier
+# workflow futuro que también escriba en el mismo DIST_REPO.
+concurrency:
+  group: dist-repo-push
+  cancel-in-progress: false
+
 env:
   # Repo público donde vive el source.json compartido y los releases (varias apps)
   DIST_REPO: ${{ github.repository_owner }}/testIpa
@@ -129,14 +137,35 @@ jobs:
         run: |
           node ../../scripts/merge-source.mjs dist-repo/source.json /tmp/app-entry.json
 
-      - name: Commit y push del source.json + icono
+      - name: Commit y push del source.json + icono (con reintento)
         run: |
           cd dist-repo
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add source.json icons/efe.png
           git commit -m "chore(efe): actualizar a v${{ steps.vars.outputs.version }}" || echo "sin cambios"
-          git -c http.https://github.com/.extraheader="" push https://x-access-token:${{ secrets.DIST_REPO_TOKEN }}@github.com/${{ env.DIST_REPO }}.git HEAD:main
+
+          # Reintenta el push por si main avanzó entre el checkout inicial
+          # y este paso (build de Xcode tarda varios minutos). El
+          # concurrency group de arriba ya debería evitar la mayoría de
+          # los casos, esto es un respaldo extra.
+          for i in 1 2 3 4 5; do
+            git fetch origin main
+            if git rebase origin/main; then
+              if git -c http.https://github.com/.extraheader="" push https://x-access-token:${{ secrets.DIST_REPO_TOKEN }}@github.com/${{ env.DIST_REPO }}.git HEAD:main; then
+                echo "Push exitoso"
+                exit 0
+              fi
+            else
+              echo "Rebase con conflicto, abortando rebase para reintentar"
+              git rebase --abort || true
+            fi
+            echo "Intento $i falló, reintentando en 5s..."
+            sleep 5
+          done
+
+          echo "No se pudo pushear después de varios intentos"
+          exit 1
 
       - name: Limpiar releases antiguos de esta app (mantener últimos ${{ env.KEEP_RELEASES }})
         env:
