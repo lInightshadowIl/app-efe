@@ -1,0 +1,9 @@
+{
+	"appId": "com.tuusuario.testapp",
+	"appName": "TestApp",
+	"webDir": "www",
+	"ios": {
+		"contentInset": "always"
+	},
+	"packageClassList": []
+}

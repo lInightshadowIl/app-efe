@@ -1,0 +1,163 @@
+name: Build efe IPA
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/efe/**"
+      - ".github/workflows/build-efe-ipa.yml"
+
+permissions:
+  contents: read
+
+env:
+  # Repo público donde vive el source.json compartido y los releases (varias apps)
+  DIST_REPO: ${{ github.repository_owner }}/testIpa
+  BUNDLE_ID: com.night.efe
+  APP_NAME: Biotren
+  # Prefijo de tag para esta app dentro del repo compartido. Cada app usa el suyo.
+  TAG_PREFIX: efe-v
+  # Cuántos releases de ESTA app se conservan en el repo de distribución
+  KEEP_RELEASES: 3
+
+jobs:
+  build:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: apps/efe
+    steps:
+      - name: Checkout monorepo
+        uses: actions/checkout@v6
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Sincronizar datos desde la raíz del monorepo hacia www/
+        # horarios.json, estaciones.json, feriados.json, version.json viven en la raíz
+        # del proyecto (fuente original). Se copian como semilla local para
+        # que la app funcione offline desde el primer arranque.
+        run: |
+          mkdir -p www/data
+          cp ../../horarios.json www/data/horarios.json
+          cp ../../efe/estaciones.json www/data/estaciones.json
+          cp ../../efe/feriados.json www/data/feriados.json
+          cp ../../version.json www/data/version.json
+
+      - name: Sync Capacitor (copia www/ dentro del proyecto iOS)
+        run: npx cap sync ios
+
+      - name: Generar icono de la app
+        run: |
+          sips -s format png -z 1024 1024 ../../icons/icon-512x512.png \
+            --out ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
+
+      - name: Build unsigned .app
+        run: |
+          cd ios/App
+          xcodebuild -project App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            MARKETING_VERSION=1.0.${{ github.run_number }} \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            clean build
+
+      - name: Package IPA (sin firmar)
+        run: |
+          mkdir -p Payload
+          cp -r ios/App/build/Build/Products/Release-iphoneos/App.app Payload/
+          zip -r ${{ env.APP_NAME }}.ipa Payload
+
+      - name: Set version vars
+        id: vars
+        run: |
+          echo "version=1.0.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+          echo "size=$(stat -f%z ${{ env.APP_NAME }}.ipa)" >> "$GITHUB_OUTPUT"
+          echo "tag=${{ env.TAG_PREFIX }}1.0.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout repo de distribución (público)
+        uses: actions/checkout@v6
+        with:
+          repository: ${{ env.DIST_REPO }}
+          token: ${{ secrets.DIST_REPO_TOKEN }}
+          path: dist-repo
+
+      - name: Publicar release del IPA
+        env:
+          GH_TOKEN: ${{ secrets.DIST_REPO_TOKEN }}
+        run: |
+          gh release create "${{ steps.vars.outputs.tag }}" \
+            "${{ env.APP_NAME }}.ipa" \
+            --repo "${{ env.DIST_REPO }}" \
+            --title "${{ env.APP_NAME }} v${{ steps.vars.outputs.version }}" \
+            --notes "Build automático desde el monorepo"
+
+      - name: Copiar ícono al repo de distribución
+        run: |
+          mkdir -p dist-repo/icons
+          cp ../../icons/icon-512x512.png dist-repo/icons/efe.png
+
+      - name: Generar JSON temporal de esta app
+        run: |
+          cat > /tmp/app-entry.json <<EOF
+          {
+            "name": "${{ env.APP_NAME }}",
+            "bundleIdentifier": "${{ env.BUNDLE_ID }}",
+            "developerName": "Tu Nombre",
+            "version": "${{ steps.vars.outputs.version }}",
+            "versionDate": "${{ steps.vars.outputs.date }}",
+            "downloadURL": "https://github.com/${{ env.DIST_REPO }}/releases/download/${{ steps.vars.outputs.tag }}/${{ env.APP_NAME }}.ipa",
+            "size": ${{ steps.vars.outputs.size }},
+            "localizedDescription": "Horarios sin conexión",
+            "iconURL": "https://raw.githubusercontent.com/${{ env.DIST_REPO }}/main/icons/efe.png"
+          }
+          EOF
+
+      - name: Mergear entrada en el source.json compartido
+        run: |
+          node ../../scripts/merge-source.mjs dist-repo/source.json /tmp/app-entry.json
+
+      - name: Commit y push del source.json + icono
+        run: |
+          cd dist-repo
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add source.json icons/efe.png
+          git commit -m "chore(efe): actualizar a v${{ steps.vars.outputs.version }}" || echo "sin cambios"
+          git push
+
+      - name: Limpiar releases antiguos de esta app (mantener últimos ${{ env.KEEP_RELEASES }})
+        env:
+          GH_TOKEN: ${{ secrets.DIST_REPO_TOKEN }}
+        run: |
+          gh api "repos/${{ env.DIST_REPO }}/releases" --paginate | jq -r \
+            --arg p "${{ env.TAG_PREFIX }}" \
+            --argjson keep ${{ env.KEEP_RELEASES }} '
+            [.[] | select(.tag_name | startswith($p))]
+            | sort_by(.created_at) | reverse
+            | .[$keep:]
+            | .[] | "\(.id) \(.tag_name)"
+          ' | while read -r id tag; do
+            echo "Borrando release antiguo: $tag"
+            gh api -X DELETE "repos/${{ env.DIST_REPO }}/releases/${id}"
+            gh api -X DELETE "repos/${{ env.DIST_REPO }}/git/refs/tags/${tag}" || true
+          done
+
+      - name: Upload IPA artifact (respaldo local, requiere login para bajarlo)
+        uses: actions/upload-artifact@v6
+        with:
+          name: efe-ipa
+          path: apps/efe/${{ env.APP_NAME }}.ipa
+          retention-days: 14

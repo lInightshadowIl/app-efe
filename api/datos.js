@@ -14,13 +14,6 @@ const MIME = {
 };
 
 export default function handler(req, res) {
-    const tokenEsperado = process.env.BIOTREN_TOKEN;
-    const tokenRecibido = req.headers['x-biotren-client'];
-
-    if (!tokenEsperado || tokenRecibido !== tokenEsperado) {
-        return res.status(403).end('Acceso denegado');
-    }
-
     const urlLimpia = req.url.split('?')[0];
     const archivo = Object.keys(RUTAS).find(r => urlLimpia.endsWith(r));
 
@@ -31,6 +24,9 @@ export default function handler(req, res) {
 
     const ext = path.extname(archivo);
     res.setHeader('Content-Type', MIME[ext] || 'application/octet-stream');
-    res.setHeader('Cache-Control', 'no-store');
+    // Datos públicos: se puede cachear un rato corto en el edge de Vercel.
+    // El cliente igual decide si hay algo nuevo comparando version.json,
+    // así que esto solo reduce invocaciones repetidas, no rompe el flujo de sync.
+    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=60');
     res.status(200).end(fs.readFileSync(rutaFisica));
 }

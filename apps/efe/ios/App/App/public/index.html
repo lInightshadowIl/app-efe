@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <title>Test App</title>
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #0b0b0f;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+      color: #f2f2f7;
+      overscroll-behavior: none;
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      /* Respeta el notch / Dynamic Island y la barra inferior del iPhone 13 Pro Max */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+    header {
+      padding: 16px 20px 8px;
+      text-align: center;
+    }
+    header h1 {
+      font-size: 22px;
+      margin: 0 0 4px;
+      font-weight: 700;
+    }
+    header p {
+      margin: 0;
+      font-size: 13px;
+      color: #8e8e93;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      padding: 20px;
+    }
+    .counter {
+      font-size: 64px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .btn-row {
+      display: flex;
+      gap: 14px;
+    }
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 16px;
+      padding: 16px 28px;
+      font-size: 17px;
+      font-weight: 600;
+      color: white;
+      background: #0a84ff;
+      min-width: 96px;
+    }
+    button:active {
+      opacity: 0.7;
+    }
+    button.secondary {
+      background: #2c2c2e;
+    }
+    .info {
+      margin-top: 10px;
+      font-size: 12px;
+      color: #636366;
+      text-align: center;
+      line-height: 1.6;
+    }
+    .badge {
+      display: inline-block;
+      margin-top: 4px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #1c1c1e;
+      font-size: 11px;
+      color: #34c759;
+    }
+    footer {
+      padding: 10px 20px 16px;
+      text-align: center;
+      font-size: 11px;
+      color: #48484a;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Test App</h1>
+    <p>Capacitor + SideStore · Build de prueba</p>
+  </header>
+
+  <main>
+    <div class="counter" id="counter">0</div>
+    <div class="btn-row">
+      <button class="secondary" id="minus">−</button>
+      <button id="plus">+</button>
+    </div>
+    <div class="info">
+      Si ves este número cambiar al tocar los botones,<br />
+      el pipeline GitHub Actions → IPA → SideStore funcionó correctamente.
+    </div>
+    <div class="badge" id="status">esperando toque…</div>
+  </main>
+
+  <footer id="footer">device info</footer>
+
+  <script>
+    let count = 0;
+    const counterEl = document.getElementById('counter');
+    const statusEl = document.getElementById('status');
+
+    document.getElementById('plus').addEventListener('click', () => {
+      count++;
+      counterEl.textContent = count;
+      statusEl.textContent = '✅ toque registrado';
+    });
+
+    document.getElementById('minus').addEventListener('click', () => {
+      count--;
+      counterEl.textContent = count;
+      statusEl.textContent = '✅ toque registrado';
+    });
+
+    document.getElementById('footer').textContent =
+      `${window.innerWidth}×${window.innerHeight} · ${navigator.userAgent.includes('CriOS') ? 'Chrome' : 'WebKit'}`;
+  </script>
+</body>
+</html>

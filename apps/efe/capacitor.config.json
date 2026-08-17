@@ -1,0 +1,13 @@
+{
+  "appId": "com.night.efe",
+  "appName": "efe",
+  "webDir": "www",
+  "ios": {
+    "contentInset": "always"
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}
