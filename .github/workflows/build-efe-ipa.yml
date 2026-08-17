@@ -115,7 +115,7 @@ jobs:
           {
             "name": "${{ env.APP_NAME }}",
             "bundleIdentifier": "${{ env.BUNDLE_ID }}",
-            "developerName": "Tu Nombre",
+            "developerName": "Night",
             "version": "${{ steps.vars.outputs.version }}",
             "versionDate": "${{ steps.vars.outputs.date }}",
             "downloadURL": "https://github.com/${{ env.DIST_REPO }}/releases/download/${{ steps.vars.outputs.tag }}/${{ env.APP_NAME }}.ipa",
