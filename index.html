@@ -243,6 +243,25 @@
                 });
             };
         })();
+
+        // 2) Sensación "de app", no "de página web": en la PWA el zoom con
+        //    pellizco y la selección de texto se dejan porque es un sitio
+        //    normal en el navegador (y por accesibilidad, no hay que
+        //    sacarlos ahí). En la app nativa no tiene sentido — se
+        //    desactivan solo acá, agregando la clase .es-nativo (ver
+        //    style.css) y bloqueando los gestos de zoom.
+        (function evitarComportamientoDeNavegador() {
+            document.documentElement.classList.add('es-nativo');
+
+            // Evita que WKWebView deje hacer pinch-zoom / doble-tap-zoom.
+            const meta = document.querySelector('meta[name="viewport"]');
+            if (meta) {
+                meta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover');
+            }
+            document.addEventListener('gesturestart', (e) => e.preventDefault());
+            document.addEventListener('gesturechange', (e) => e.preventDefault());
+            document.addEventListener('dblclick', (e) => e.preventDefault(), { passive: false });
+        })();
     }
     </script>
 

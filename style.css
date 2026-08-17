@@ -13,6 +13,37 @@
     box-sizing: border-box;
 }
 
+html {
+    /* Scroll con inercia nativa (sobre todo importante en WKWebView) y sin
+       el efecto "rebote de goma" que se siente distinto al de Safari. */
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+}
+
+/* ==================================================================
+   Solo aplica en el IPA (la clase .es-nativo la agrega index.html
+   únicamente cuando corre dentro de Capacitor). En la PWA del navegador
+   se deja seleccionar texto y hacer zoom con pellizco normalmente, tanto
+   por accesibilidad como porque ahí sí es una página web común.
+   ================================================================== */
+.es-nativo {
+    -webkit-user-select: none;
+    user-select: none;
+    /* Evita el menú de "Copiar / Look Up" al mantener presionado */
+    -webkit-touch-callout: none;
+    /* Saca el flash gris al tocar botones/links */
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Excepción: los campos de texto (ej. nombre de ruta favorita) siguen
+   permitiendo seleccionar y editar con normalidad. */
+.es-nativo input,
+.es-nativo textarea,
+.es-nativo select {
+    -webkit-user-select: text;
+    user-select: text;
+}
+
 body { 
     font-family: 'Segoe UI', Roboto, -apple-system, BlinkMacSystemFont, sans-serif; 
     background: var(--fondo-negro); 
