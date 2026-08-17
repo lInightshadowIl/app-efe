@@ -150,6 +150,14 @@ jobs:
           # concurrency group de arriba ya debería evitar la mayoría de
           # los casos, esto es un respaldo extra.
           for i in 1 2 3 4 5; do
+            # Limpia cualquier "suciedad" residual que no sea parte de
+            # nuestro commit (p.ej. por normalización de line-endings
+            # del runner al hacer checkout). Todo lo que nos importa
+            # (source.json, icons/efe.png) ya está comiteado arriba,
+            # así que esto es seguro.
+            git checkout -- . 2>/dev/null || true
+            git clean -fd 2>/dev/null || true
+
             git fetch origin main
             if git rebase origin/main; then
               if git -c http.https://github.com/.extraheader="" push https://x-access-token:${{ secrets.DIST_REPO_TOKEN }}@github.com/${{ env.DIST_REPO }}.git HEAD:main; then
