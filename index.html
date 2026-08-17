@@ -206,7 +206,53 @@
     3. La verificación periódica cada hora se mantiene igual.
 -->
 <script>
-    if ('serviceWorker' in navigator) {
+    // ============================================================
+    // PUENTE NATIVO (Capacitor / IPA)
+    // ------------------------------------------------------------
+    // Este bloque SOLO hace algo cuando la app corre empaquetada
+    // como IPA vía Capacitor (window.Capacitor.isNativePlatform()).
+    // En el navegador (PWA en Vercel) window.Capacitor no existe,
+    // así que todo esto queda como no-op y el comportamiento de la
+    // PWA no cambia en absoluto. La idea es mantener UN solo
+    // index.html / app.js para ambas plataformas.
+    window.__ES_NATIVO__ = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+
+    if (window.__ES_NATIVO__) {
+        // 1) Geolocalización: en iOS/Android nativo, navigator.geolocation
+        //    del WebView no siempre dispara el diálogo de permisos de forma
+        //    confiable. Se reemplaza por el plugin nativo de Capacitor
+        //    (@capacitor/geolocation), que sí gestiona el permiso del SO
+        //    correctamente. app.js sigue llamando a
+        //    navigator.geolocation.getCurrentPosition(...) exactamente
+        //    igual que en la PWA — no requiere ningún cambio de lógica.
+        (function parchearGeolocalizacion() {
+            const GeoPlugin = window.Capacitor.Plugins && window.Capacitor.Plugins.Geolocation;
+            if (!GeoPlugin) return;
+            navigator.geolocation = navigator.geolocation || {};
+            navigator.geolocation.getCurrentPosition = function (onOk, onError, opciones) {
+                GeoPlugin.getCurrentPosition({
+                    enableHighAccuracy: opciones?.enableHighAccuracy ?? false,
+                    timeout: opciones?.timeout ?? 10000
+                }).then(onOk).catch(function (err) {
+                    if (!onError) return;
+                    // Traduce el error nativo al formato de la Geolocation API web
+                    // (código 1 = permiso denegado) para que el manejo de errores
+                    // que ya existe en app.js funcione sin modificarse.
+                    const denegado = /denied|denegad|permission/i.test(err?.message || '');
+                    onError({ code: denegado ? 1 : 2, message: err?.message || 'Error de geolocalización' });
+                });
+            };
+        })();
+    }
+    </script>
+
+<script>
+    // El Service Worker (caché offline al estilo PWA) no aplica en la app
+    // nativa: los archivos ya viajan empaquetados dentro del IPA y se
+    // sirven localmente sin necesidad de caché de navegador. Registrarlo
+    // igual no rompería nada, pero es trabajo de más y ruido en consola,
+    // así que se omite cuando corre nativo.
+    if ('serviceWorker' in navigator && !window.__ES_NATIVO__) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('/service-worker.js')
                 .then(registration => {

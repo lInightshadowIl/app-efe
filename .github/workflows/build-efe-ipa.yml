@@ -7,6 +7,19 @@ on:
     paths:
       - "apps/efe/**"
       - ".github/workflows/build-efe-ipa.yml"
+      # El IPA ahora se genera sincronizando estos archivos de la PWA en
+      # cada build (ver scripts/sync-efe-www.mjs), así que un cambio acá
+      # también debe disparar un nuevo build del IPA.
+      - "index.html"
+      - "app.js"
+      - "style.css"
+      - "estaciones.js"
+      - "manifest.json"
+      - "service-worker.js"
+      - "icons/**"
+      - "horarios.json"
+      - "version.json"
+      - "scripts/sync-efe-www.mjs"
 
 permissions:
   contents: read
@@ -47,16 +60,15 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Sincronizar datos desde la raíz del monorepo hacia www/
-        # horarios.json, estaciones.json, feriados.json, version.json viven en la raíz
-        # del proyecto (fuente original). Se copian como semilla local para
-        # que la app funcione offline desde el primer arranque.
-        run: |
-          mkdir -p www/data
-          cp ../../horarios.json www/data/horarios.json
-          cp ../../efe/estaciones.json www/data/estaciones.json
-          cp ../../efe/feriados.json www/data/feriados.json
-          cp ../../version.json www/data/version.json
+      - name: Sincronizar www/ desde la fuente de la PWA (raíz del monorepo)
+        # index.html/app.js/style.css/estaciones.js/manifest.json/service-worker.js
+        # e íconos se copian tal cual desde la raíz (misma lógica que la PWA,
+        # sin duplicados mantenidos a mano). horarios.json y version.json se
+        # copian a la raíz de www/ — la MISMA ruta relativa que app.js usa en
+        # fetch("horarios.json") / fetch("version.json") — para que la app
+        # tenga datos completos desde el primer arranque, con o sin internet.
+        working-directory: .
+        run: node scripts/sync-efe-www.mjs
 
       - name: Sync Capacitor (copia www/ dentro del proyecto iOS)
         run: npx cap sync ios
