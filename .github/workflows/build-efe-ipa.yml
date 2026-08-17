@@ -100,7 +100,13 @@ jobs:
         with:
           repository: ${{ env.DIST_REPO }}
           token: ${{ secrets.DIST_REPO_TOKEN }}
-          path: dist-repo
+          # OJO: el input "path" de actions/checkout siempre es relativo a
+          # $GITHUB_WORKSPACE (la raíz del repo), NO respeta el
+          # "defaults.run.working-directory: apps/efe" del job. Por eso hay
+          # que escribir la ruta completa aquí, para que quede exactamente
+          # donde los pasos siguientes (que sí corren con working-directory
+          # apps/efe) esperan encontrarla.
+          path: apps/efe/dist-repo
 
       - name: Publicar release del IPA
         env:
